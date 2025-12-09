@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Pipeline Editor</title>
+	<style>
+		body { font-family: Arial, sans-serif; margin: 2em; }
+		.row { display: flex; flex-direction: row; gap: 1em; margin-top: 1em; }
+		.img-preview { max-width: 200px; max-height: 200px; border: 1px solid #ccc; }
+		.names-list { margin-top: 1em; }
+	</style>
+</head>
+<body>
+	<h2>Pipeline Editor</h2>
+	<button id="runBtn">Run</button>
+	<button id="namesBtn">Names</button>
+	<div id="imagesRow" class="row"></div>
+	<div id="namesList" class="names-list"></div>
+	<div id="errorMsg" style="color:red; margin-top:1em;"></div>
+	<script>
+		const errorMsg = document.getElementById('errorMsg');
+		document.getElementById('runBtn').onclick = function() {
+			errorMsg.textContent = '';
+			fetch('/api/session/pipeline/run', { method: 'POST' })
+				.then(async res => {
+					if (res.ok) {
+						const urls = await res.json();
+						const imagesRow = document.getElementById('imagesRow');
+						imagesRow.innerHTML = '';
+						urls.forEach(url => {
+							const img = document.createElement('img');
+							img.src = url;
+							img.className = 'img-preview';
+							imagesRow.appendChild(img);
+						});
+					} else {
+						let err;
+						try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+						errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+					}
+				})
+				.catch(e => {
+					errorMsg.textContent = 'Network error: ' + e;
+				});
+		};
+		document.getElementById('namesBtn').onclick = function() {
+			errorMsg.textContent = '';
+			fetch('/api/session/pipeline/operations/names')
+				.then(async res => {
+					if (res.ok) {
+						const names = await res.json();
+						const namesList = document.getElementById('namesList');
+						namesList.innerHTML = '<b>Operation Names:</b> ' + names.join(', ');
+					} else {
+						let err;
+						try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+						errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+					}
+				})
+				.catch(e => {
+					errorMsg.textContent = 'Network error: ' + e;
+				});
+		};
+	</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Upload Image</title>
+	<style>
+		body { font-family: Arial, sans-serif; margin: 2em; }
+		.error { color: red; margin-top: 1em; }
+	</style>
+</head>
+<body>
+	<h2>Upload Image</h2>
+	<form id="uploadForm">
+		<input type="file" name="file" id="fileInput" accept="image/*" required />
+		<button type="submit">Upload</button>
+	</form>
+	<div id="errorMsg" class="error"></div>
+	<script>
+		const form = document.getElementById('uploadForm');
+		const errorMsg = document.getElementById('errorMsg');
+		form.addEventListener('submit', function(e) {
+			e.preventDefault();
+			errorMsg.textContent = '';
+			const fileInput = document.getElementById('fileInput');
+			if (!fileInput.files.length) {
+				errorMsg.textContent = 'Please select an image file.';
+				return;
+			}
+			const formData = new FormData();
+			formData.append('file', fileInput.files[0]);
+			fetch('/api/session/pipeline/create-default', {
+				method: 'POST',
+				body: formData
+			})
+			.then(async response => {
+				if (response.ok) {
+					setTimeout(() => {
+						window.location.href = '/editor';
+					}, 1000);
+				} else {
+					const errorJson = await response.json();
+					errorMsg.textContent = JSON.stringify(errorJson);
+				}
+			})
+			.catch(err => {
+				errorMsg.textContent = 'Network error: ' + err;
+			});
+		});
+	</script>
+</body>
+</html>
