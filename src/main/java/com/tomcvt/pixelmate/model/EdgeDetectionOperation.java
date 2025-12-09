@@ -1,20 +1,33 @@
 package com.tomcvt.pixelmate.model;
 
 import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.Map;
 
+import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.parameters.EdgeDetectionParams;
 
 public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionParams> {
-    private static final String NAME = "EDGE_DETECTION";
+    public static final String NAME = "EDGE_DETECTION";
 
     public static EdgeDetectionOperation create() {
         return new EdgeDetectionOperation();
     }
     public static EdgeDetectionParams createDefaultParams() {
-        EdgeDetectionParams params = new EdgeDetectionParams(128);
+        EdgeDetectionParams params = new EdgeDetectionParams(EdgeDetectionParams.DEFAULT_THRESHOLD);
         return params;
     }
     public EdgeDetectionOperation() {
+    }
+    
+    @Override
+    public EdgeDetectionParams parseParameters(Map<String, Object> values) {
+        return EdgeDetectionParams.fromMap(values);
+    }
+
+    @Override
+    public List<ParamSpec> getParamSpecs() {
+        return EdgeDetectionParams.getParamSpecs();
     }
 
     @Override
@@ -23,28 +36,6 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
         BufferedImage input = inputImage.getBufferedImage(ImageFrame.ImageType.GRAY);
         BufferedImage output = applySobel(input, threshold);
         return ImageFrame.with(inputImage, output, ImageFrame.ImageType.BINARY);
-/*
-        input = inputImage.getBufferedImage(ImageFrame.ImageType.GRAY);
-
-        int width = input.getWidth();
-        int height = input.getHeight();
-        BufferedImage edges = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
-        threshold = parameters.getThreshold() != null ? parameters.getThreshold() : 128;
-
-        for (int y = 1; y < height - 1; y++) {
-            for (int x = 1; x < width - 1; x++) {
-                int rgb = input.getRGB(x, y) & 0xFF;
-                int gx = ((input.getRGB(x + 1, y) & 0xFF) - (input.getRGB(x - 1, y) & 0xFF));
-                int gy = ((input.getRGB(x, y + 1) & 0xFF) - (input.getRGB(x, y - 1) & 0xFF));
-                int g = Math.abs(gx) + Math.abs(gy);
-                if (g > threshold)
-                    edges.setRGB(x, y, 0xFF000000); // black
-                else
-                    edges.setRGB(x, y, 0xFFFFFFFF); // white
-            }
-        }
-        return ImageFrame.fromBufferedImage(edges);
-        */
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.tomcvt.pixelmate.pipeline;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.tomcvt.pixelmate.model.ImageOperationI;
 import com.tomcvt.pixelmate.parameters.OperationParameters;
@@ -30,8 +29,6 @@ public class PipelineBuilder {
             nodes.get(i).setIndex(i);
         }
         existingPipeline.setNodes(nodes);
-        existingPipeline.setHead(nodes.isEmpty() ? null : nodes.get(0));
-        existingPipeline.setTail(nodes.isEmpty() ? null : nodes.get(nodes.size() - 1));
         existingPipeline.clearCacheAndUrls();
         return existingPipeline;
     }

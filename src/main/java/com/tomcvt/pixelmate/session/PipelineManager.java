@@ -2,12 +2,15 @@ package com.tomcvt.pixelmate.session;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.tomcvt.pixelmate.dto.OperationInfoDto;
+import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.EdgeDetectionOperation;
 import com.tomcvt.pixelmate.model.ThickenEdgesOperation;
 import com.tomcvt.pixelmate.pipeline.OperationsPipeline;
@@ -28,6 +31,7 @@ public class PipelineManager {
         this.cacheDir = cacheDir;
         this.sessionId = httpSession.getId();
     }
+    //TODO add method to create pipeline with stock image
 
     public void createDefaultPipeline(MultipartFile uploadImage) {
         BufferedImage image = ImageReader.loadImage(uploadImage);
@@ -63,5 +67,19 @@ public class PipelineManager {
     public List<String> runFromIndex(int index) {
         pipeline.run(index);
         return pipeline.getUrlList();
+    }
+
+    public List<String> updateOperationParamsAndRun(int index, Map<String, Object> values) {
+        pipeline.updateNodeParameters(index, values);
+        pipeline.run(index);
+        return pipeline.getUrlList();
+    }
+
+    public List<List<ParamSpec>> getOperationsParamSpecs() {
+        return pipeline.getOperationsParamSpecs();
+    }
+
+    public List<OperationInfoDto> getOperationsInfo() {
+        return pipeline.getOperationsInfo();
     }
 }

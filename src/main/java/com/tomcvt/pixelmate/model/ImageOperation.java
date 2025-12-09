@@ -8,7 +8,7 @@ public abstract class ImageOperation<P extends OperationParameters> implements I
     protected final P params;
     public abstract String getName();
     public abstract ImageFrame apply(ImageFrame input, P parameters);
-    public abstract OperationParameters createDefaultParameters();
+    public abstract P createDefaultParams();
 
     public ImageOperation(Map<String, Object> params) {
         this.params = fromMap(params);

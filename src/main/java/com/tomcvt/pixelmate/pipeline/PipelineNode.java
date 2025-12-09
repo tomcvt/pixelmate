@@ -1,7 +1,9 @@
 package com.tomcvt.pixelmate.pipeline;
 
 import java.util.List;
+import java.util.Map;
 
+import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
 import com.tomcvt.pixelmate.parameters.OperationParameters;
@@ -37,6 +39,15 @@ public class PipelineNode<P extends OperationParameters> {
     }
     public int getIndex() {
         return index;
+    }
+
+    public List<ParamSpec> getParamSpecs() {
+        return operation.getParamSpecs();
+    }
+
+    public void updateParameters(Map<String, Object> values) {
+        P newParams = operation.parseParameters(values);
+        setParameters(newParams);
     }
 
 }

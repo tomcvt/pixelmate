@@ -2,31 +2,22 @@ package com.tomcvt.pixelmate.pipeline;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.web.multipart.MultipartFile;
-
+import com.tomcvt.pixelmate.dto.OperationInfoDto;
+import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.utility.ImageSaver;
 
 public class OperationsPipeline {
-    private PipelineNode<?> head;
-    private PipelineNode<?> tail;
     private List<PipelineNode<?>> nodes = new ArrayList<>();
-    // private Map<String, Integer> nameMap = new HashMap<>();
     private List<String> urlList = new ArrayList<>();
     private List<ImageFrame> resultCache = new ArrayList<>(); // index 0 original with saved name, i + 1 index of i node
-    private UUID tempName = UUID.randomUUID();
     private String sessionId;
     private String cacheDir;
     private String savedOriginalRelPath;
-    // private ImageSaver imageSaver = new ImageSaver();
-    // TODO later interface for different storage types
     private BufferedImage original;
-    private MultipartFile uploadFile;
 
     public OperationsPipeline(BufferedImage original, String sessionId, String cacheDir) {
         this.original = original;
@@ -34,12 +25,10 @@ public class OperationsPipeline {
         this.cacheDir = cacheDir;
         this.savedOriginalRelPath = ImageSaver.saveImage(cacheDir, sessionId, "original", original);
         resultCache.add(ImageFrame.fromBufferedImage(original));
-        urlList.add("/generated/" + savedOriginalRelPath);
+        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
     }
 
-    public OperationsPipeline(PipelineNode<?> head, PipelineNode<?> tail, List<PipelineNode<?>> nodes) {
-        this.head = head;
-        this.tail = tail;
+    public OperationsPipeline(List<PipelineNode<?>> nodes) {
         this.nodes = nodes;
     }
 
@@ -47,7 +36,12 @@ public class OperationsPipeline {
         this.urlList.clear();
         this.resultCache.clear();
         resultCache.add(ImageFrame.fromBufferedImage(original));
-        urlList.add("/generated/" + savedOriginalRelPath);
+        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
+    }
+
+    public void clearUrls() {
+        this.urlList.clear();
+        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
     }
 
     public void setSessionId(String sessionId) {
@@ -56,14 +50,6 @@ public class OperationsPipeline {
 
     public String getSessionId() {
         return sessionId;
-    }
-
-    public void setTail(PipelineNode<?> tail) {
-        this.tail = tail;
-    }
-
-    public void setHead(PipelineNode<?> head) {
-        this.head = head;
     }
 
     public void setNodes(List<PipelineNode<?>> nodes) {
@@ -101,6 +87,7 @@ public class OperationsPipeline {
 
     public void run(ImageFrame inputImage, int startIndex) {
         ImageFrame currentImage = inputImage;
+        clearIntermediateResultsFrom(startIndex);
         for (int i = startIndex; i < nodes.size(); i++) {
             PipelineNode<?> node = nodes.get(i);
 
@@ -110,8 +97,48 @@ public class OperationsPipeline {
             }
             BufferedImage bufferedResult = currentImage.getBufferedImage(currentImage.getLastResult());
             String relPath = ImageSaver.saveImage(cacheDir, sessionId, "result_" + i, bufferedResult);
-            urlList.add("/generated/" + relPath);
+            urlList.add("/generated/" + relPath + getTimeStampString());
             resultCache.add(currentImage);
+        }
+    }
+
+    public void updateNodeParameters(int index, Map<String, Object> values) {
+        if (index < 0 || index >= nodes.size()) {
+            throw new IllegalArgumentException("Invalid node index: " + index);
+        }
+        PipelineNode<?> node = nodes.get(index);
+        node.updateParameters(values);
+    }
+
+    public List<List<ParamSpec>> getOperationsParamSpecs() {
+        List<List<com.tomcvt.pixelmate.dto.ParamSpec>> specs = new ArrayList<>();
+        for (PipelineNode<?> node : nodes) {
+            specs.add(node.getOperation().getParamSpecs());
+        }
+        return specs;
+    }
+
+    public List<OperationInfoDto> getOperationsInfo() {
+        List<OperationInfoDto> infos = new ArrayList<>();
+        for (PipelineNode<?> node : nodes) {
+            infos.add(new OperationInfoDto(
+                node.getOperation().getName(),
+                node.getOperation().getParamSpecs()
+            ));
+        }
+        return infos;
+    }
+
+    private String getTimeStampString() {
+        return "?t=" + System.currentTimeMillis();
+    }
+
+    private void clearIntermediateResultsFrom(int index) {
+        while (resultCache.size() > index + 1) {
+            resultCache.remove(resultCache.size() - 1);
+        }
+        while (urlList.size() > index + 1) {
+            urlList.remove(urlList.size() - 1);
         }
     }
 }
