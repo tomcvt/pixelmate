@@ -1,154 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<title>Pipeline Editor</title>
 	<style>
-		body { font-family: Arial, sans-serif; margin: 2em; }
-		.row { display: flex; flex-direction: row; gap: 1em; margin-top: 1em; }
-		.img-preview { max-width: 200px; max-height: 200px; border: 1px solid #ccc; }
-		.names-list { margin-top: 1em; }
+		body {
+			font-family: Arial, sans-serif;
+			margin: 2em;
+		}
+
+		.row {
+			display: flex;
+			flex-direction: row;
+			gap: 1em;
+			margin-top: 1em;
+		}
+
+		.img-preview {
+			max-width: 200px;
+			max-height: 200px;
+			border: 1px solid #ccc;
+		}
+
+		.names-list {
+			margin-top: 1em;
+		}
 	</style>
 </head>
+
 <body>
 	<h2>Pipeline Editor</h2>
 	<div id="controls"></div>
-	<div id="imagesRow" class="row" style="min-height:300px; background:#f8f8f8; border:1px solid #ccc; margin-bottom:2em; align-items:center;"></div>
+	<div id="imagesRow" class="row"
+		style="min-height:300px; background:#f8f8f8; border:1px solid #ccc; margin-bottom:2em; align-items:center;">
+	</div>
 	<div id="errorMsg" style="color:red; margin-top:1em;"></div>
 	<script>
-	// Helper debounce function
-	function debounce(fn, delay) {
-		let timer = null;
-		return function(...args) {
-			if (timer) clearTimeout(timer);
-			timer = setTimeout(() => fn.apply(this, args), delay);
-		};
-	}
-
-	const imagesRow = document.getElementById('imagesRow');
-	const errorMsg = document.getElementById('errorMsg');
-	const controls = document.getElementById('controls');
-
-	// Render images
-	function renderImages(urls) {
-		imagesRow.innerHTML = '';
-		urls.forEach(url => {
-			const img = document.createElement('img');
-			img.src = url + '?t=' + Date.now();
-			img.className = 'img-preview';
-			imagesRow.appendChild(img);
-		});
-	}
-
-	// Run pipeline and render images
-	function runPipeline() {
-		errorMsg.textContent = '';
-		fetch('/api/session/pipeline/run', { method: 'POST' })
-			.then(async res => {
-				if (res.ok) {
-					const urls = await res.json();
-					renderImages(urls);
-				} else {
-					let err;
-					try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
-					errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
-				}
-			})
-			.catch(e => {
-				errorMsg.textContent = 'Network error: ' + e;
-			});
-	}
-
-	// Fetch operation info and create sliders
-	function fetchOperationInfo() {
-		fetch('/api/session/pipeline/operations/info')
-			.then(async res => {
-				if (res.ok) {
-					const infos = await res.json();
-					controls.innerHTML = '';
-					infos.forEach((info, idx) => {
-						const opDiv = document.createElement('div');
-						opDiv.style.display = 'inline-block';
-						opDiv.style.margin = '0 2em 2em 0';
-						opDiv.style.padding = '1em';
-						opDiv.style.border = '1px solid #ddd';
-						opDiv.style.background = '#fafafa';
-						opDiv.style.verticalAlign = 'top';
-						opDiv.style.minWidth = '220px';
-						const title = document.createElement('div');
-						title.textContent = info.name;
-						title.style.fontWeight = 'bold';
-						title.style.marginBottom = '0.5em';
-						opDiv.appendChild(title);
-						info.paramSpecs.forEach(spec => {
-							if (spec.type === 'Integer') {
-								const label = document.createElement('label');
-								label.textContent = spec.name + ': ';
-								label.htmlFor = `slider-${idx}-${spec.name}`;
-								label.style.marginRight = '0.5em';
-								const slider = document.createElement('input');
-								slider.type = 'range';
-								slider.id = `slider-${idx}-${spec.name}`;
-								slider.min = spec.minValue;
-								slider.max = spec.maxValue;
-								slider.value = spec.defaultValue;
-								slider.step = 1;
-								slider.style.width = '120px';
-								const valueSpan = document.createElement('span');
-								valueSpan.textContent = slider.value;
-								valueSpan.style.marginLeft = '0.5em';
-								slider.oninput = function() {
-									valueSpan.textContent = slider.value;
-									debouncedUpdateParam(idx, spec.name, parseInt(slider.value));
-								};
-								opDiv.appendChild(label);
-								opDiv.appendChild(slider);
-								opDiv.appendChild(valueSpan);
-								opDiv.appendChild(document.createElement('br'));
-							}
-							// Add more types as needed
-						});
-						controls.appendChild(opDiv);
-					});
-				}
-			});
-	}
-
-	// Debounced update param logic
-	const updateParamTimers = {};
-	function debouncedUpdateParam(idx, paramName, value) {
-		if (updateParamTimers[idx]) clearTimeout(updateParamTimers[idx]);
-		updateParamTimers[idx] = setTimeout(() => {
-			const payload = {
-				index: idx,
-				values: { [paramName]: value }
+		// Helper debounce function
+		function debounce(fn, delay) {
+			let timer = null;
+			return function (...args) {
+				if (timer) clearTimeout(timer);
+				timer = setTimeout(() => fn.apply(this, args), delay);
 			};
-			fetch('/api/session/pipeline/operations/update-param', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			})
-			.then(async res => {
-				if (res.ok) {
-					const urls = await res.json();
-					renderImages(urls);
-				} else {
-					let err;
-					try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
-					errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
-				}
-			})
-			.catch(e => {
-				errorMsg.textContent = 'Network error: ' + e;
-			});
-		}, 1000);
-	}
+		}
 
-	// On page load, run pipeline and fetch operation info
-	window.addEventListener('DOMContentLoaded', () => {
-		runPipeline();
-		fetchOperationInfo();
-	});
+		const imagesRow = document.getElementById('imagesRow');
+		const errorMsg = document.getElementById('errorMsg');
+		const controls = document.getElementById('controls');
+
+		// Render images
+		function renderImages(urls) {
+			imagesRow.innerHTML = '';
+			urls.forEach(url => {
+				const img = document.createElement('img');
+				img.src = url + '?t=' + Date.now();
+				img.className = 'img-preview';
+				imagesRow.appendChild(img);
+			});
+		}
+
+		// Run pipeline and render images
+		function runPipeline() {
+			errorMsg.textContent = '';
+			fetch('/api/session/pipeline/run', { method: 'POST' })
+				.then(async res => {
+					if (res.ok) {
+						const urls = await res.json();
+						renderImages(urls);
+					} else {
+						let err;
+						try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+						errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+					}
+				})
+				.catch(e => {
+					errorMsg.textContent = 'Network error: ' + e;
+				});
+		}
+
+		// Fetch operation info and create sliders
+		function fetchOperationInfo() {
+			fetch('/api/session/pipeline/operations/info')
+				.then(async res => {
+					if (res.ok) {
+						const infos = await res.json();
+						controls.innerHTML = '';
+						infos.forEach((info, idx) => {
+							const opDiv = document.createElement('div');
+							opDiv.style.display = 'inline-block';
+							opDiv.style.margin = '0 2em 2em 0';
+							opDiv.style.padding = '1em';
+							opDiv.style.border = '1px solid #ddd';
+							opDiv.style.background = '#fafafa';
+							opDiv.style.verticalAlign = 'top';
+							opDiv.style.minWidth = '220px';
+							const title = document.createElement('div');
+							title.textContent = info.name;
+							title.style.fontWeight = 'bold';
+							title.style.marginBottom = '0.5em';
+							opDiv.appendChild(title);
+							info.paramSpecs.forEach(spec => {
+								if (spec.type === 'Integer') {
+									const label = document.createElement('label');
+									label.textContent = spec.name + ': ';
+									label.htmlFor = `slider-${idx}-${spec.name}`;
+									label.style.marginRight = '0.5em';
+									const slider = document.createElement('input');
+									slider.type = 'range';
+									slider.id = `slider-${idx}-${spec.name}`;
+									slider.min = spec.minValue;
+									slider.max = spec.maxValue;
+									slider.value = spec.defaultValue;
+									slider.step = 1;
+									slider.style.width = '120px';
+									const valueSpan = document.createElement('span');
+									valueSpan.textContent = slider.value;
+									valueSpan.style.marginLeft = '0.5em';
+									slider.oninput = function () {
+										valueSpan.textContent = slider.value;
+										debouncedUpdateParam(idx, spec.name, parseInt(slider.value));
+									};
+									opDiv.appendChild(label);
+									opDiv.appendChild(slider);
+									opDiv.appendChild(valueSpan);
+									opDiv.appendChild(document.createElement('br'));
+								}
+								if (spec.type === 'Double') {
+									const label = document.createElement('label');
+									label.textContent = spec.name + ': ';
+									label.htmlFor = `slider-${idx}-${spec.name}`;
+									label.style.marginRight = '0.5em';
+									const slider = document.createElement('input');
+									slider.type = 'range';
+									slider.id = `slider-${idx}-${spec.name}`;
+									slider.min = spec.minValue;
+									slider.max = spec.maxValue;
+									slider.value = spec.defaultValue;
+									slider.step = (spec.maxValue - spec.minValue) / 100 || 0.01;
+									slider.style.width = '120px';
+									const valueSpan = document.createElement('span');
+									valueSpan.textContent = slider.value;
+									valueSpan.style.marginLeft = '0.5em';
+									slider.oninput = function () {
+										valueSpan.textContent = slider.value;
+										debouncedUpdateParam(idx, spec.name, parseFloat(slider.value));
+									};
+									opDiv.appendChild(label);
+									opDiv.appendChild(slider);
+									opDiv.appendChild(valueSpan);
+									opDiv.appendChild(document.createElement('br'));
+								}
+							});
+							controls.appendChild(opDiv);
+						});
+					}
+				});
+		}
+
+		// Debounced update param logic
+		const updateParamTimers = {};
+		function debouncedUpdateParam(idx, paramName, value) {
+			if (updateParamTimers[idx]) clearTimeout(updateParamTimers[idx]);
+			updateParamTimers[idx] = setTimeout(() => {
+				const payload = {
+					index: idx,
+					values: { [paramName]: value }
+				};
+				fetch('/api/session/pipeline/operations/update-param', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload)
+				})
+					.then(async res => {
+						if (res.ok) {
+							const urls = await res.json();
+							renderImages(urls);
+						} else {
+							let err;
+							try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+							errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+						}
+					})
+					.catch(e => {
+						errorMsg.textContent = 'Network error: ' + e;
+					});
+			}, 1000);
+		}
+
+		// On page load, run pipeline and fetch operation info
+		window.addEventListener('DOMContentLoaded', () => {
+			runPipeline();
+			fetchOperationInfo();
+		});
 	</script>
 </body>
+
 </html>

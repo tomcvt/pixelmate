@@ -1,28 +1,32 @@
-package com.tomcvt.pixelmate.model;
+package com.tomcvt.pixelmate.model.operations;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
 
 import com.tomcvt.pixelmate.dto.ParamSpec;
+import com.tomcvt.pixelmate.model.ImageFrame;
+import com.tomcvt.pixelmate.model.ImageOperationI;
 import com.tomcvt.pixelmate.parameters.EdgeDetectionParams;
 
 public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionParams> {
     public static final String NAME = "EDGE_DETECTION";
 
-    public static EdgeDetectionOperation create() {
-        return new EdgeDetectionOperation();
-    }
-    public static EdgeDetectionParams createDefaultParams() {
-        EdgeDetectionParams params = new EdgeDetectionParams(EdgeDetectionParams.DEFAULT_THRESHOLD);
-        return params;
-    }
-    public EdgeDetectionOperation() {
+    public static EdgeDetectionParams createDefaultPipelineParams() {
+        return new EdgeDetectionParams(EdgeDetectionParams.DEFAULT_THRESHOLD);
     }
     
     @Override
-    public EdgeDetectionParams parseParameters(Map<String, Object> values) {
+    public EdgeDetectionParams getDefaultPipelineParameters() {
+        return createDefaultPipelineParams();
+    }
+    @Override
+    public EdgeDetectionParams parsePipelineParameters(Map<String, Object> values) {
         return EdgeDetectionParams.fromMap(values);
+    }
+    @Override
+    public EdgeDetectionParams parsePipelineParameters(EdgeDetectionParams oldParams, Map<String, Object> values) {
+        return EdgeDetectionParams.fromMapWithOldParams(oldParams, values);
     }
 
     @Override
@@ -33,7 +37,7 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
     @Override
     public ImageFrame apply(ImageFrame inputImage, EdgeDetectionParams parameters) {
         int threshold = parameters.getThreshold() != null ? parameters.getThreshold() : 128;
-        BufferedImage input = inputImage.getBufferedImage(ImageFrame.ImageType.GRAY);
+        BufferedImage input = inputImage.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.GRAY, ImageFrame.EditPath.COLOR);
         BufferedImage output = applySobel(input, threshold);
         return ImageFrame.with(inputImage, output, ImageFrame.ImageType.BINARY);
     }

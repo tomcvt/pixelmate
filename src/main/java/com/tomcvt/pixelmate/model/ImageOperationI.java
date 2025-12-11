@@ -10,5 +10,7 @@ public interface ImageOperationI<P extends OperationParameters> {
     ImageFrame apply(ImageFrame input, P parameters);
     String getName();
     List<ParamSpec> getParamSpecs();
-    P parseParameters(Map<String, Object> values);
+    P parsePipelineParameters(Map<String, Object> values);
+    P parsePipelineParameters(P oldParams, Map<String, Object> values);
+    P getDefaultPipelineParameters();
 }

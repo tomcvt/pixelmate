@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.tomcvt.pixelmate.model.EdgeDetectionOperation;
-import com.tomcvt.pixelmate.model.ThickenEdgesOperation;
+import com.tomcvt.pixelmate.model.operations.EdgeDetectionOperation;
+import com.tomcvt.pixelmate.model.operations.ThickenEdgesOperation;
 
 @Service
 public class OperationRegistry {

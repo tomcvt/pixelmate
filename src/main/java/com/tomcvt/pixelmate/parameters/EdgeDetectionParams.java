@@ -13,6 +13,9 @@ public class EdgeDetectionParams implements OperationParameters {
     public static final Integer MAX_THRESHOLD = 255;
     public static final ParamsFactory<EdgeDetectionParams> FACTORY = EdgeDetectionParams::fromMap;
     public static EdgeDetectionParams fromMap(Map<String, Object> params) {
+        if (params == null) {
+            return new EdgeDetectionParams(DEFAULT_THRESHOLD);
+        }
         Integer threshold = DEFAULT_THRESHOLD;
         if (params.containsKey(PARAM_THRESHOLD)) {
             try {
@@ -20,7 +23,26 @@ public class EdgeDetectionParams implements OperationParameters {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid threshold value: " + params.get(PARAM_THRESHOLD));
             }
-            
+            if (threshold < MIN_THRESHOLD || threshold > MAX_THRESHOLD) {
+                throw new IllegalArgumentException("Threshold value out of bounds: " + threshold);
+            }
+        }
+        return new EdgeDetectionParams(threshold);
+    }
+    public static EdgeDetectionParams fromMapWithOldParams(EdgeDetectionParams oldParams, Map<String,Object> values) {
+        if (values == null) {
+            return oldParams;
+        }
+        Integer threshold = oldParams.getThreshold();
+        if (values.containsKey(PARAM_THRESHOLD)) {
+            try {
+                threshold = Integer.parseInt(values.get(PARAM_THRESHOLD).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid threshold value: " + values.get(PARAM_THRESHOLD));
+            }
+            if (threshold < MIN_THRESHOLD || threshold > MAX_THRESHOLD) {
+                throw new IllegalArgumentException("Threshold value out of bounds: " + threshold);
+            }
         }
         return new EdgeDetectionParams(threshold);
     }
@@ -43,5 +65,6 @@ public class EdgeDetectionParams implements OperationParameters {
     public Integer getThreshold() {
         return threshold;
     }
+    
     
 }

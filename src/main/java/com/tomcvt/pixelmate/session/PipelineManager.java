@@ -11,8 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamSpec;
-import com.tomcvt.pixelmate.model.EdgeDetectionOperation;
-import com.tomcvt.pixelmate.model.ThickenEdgesOperation;
+import com.tomcvt.pixelmate.model.operations.EdgeDetectionOperation;
+import com.tomcvt.pixelmate.model.operations.KMeansOperation;
+import com.tomcvt.pixelmate.model.operations.ThickenEdgesOperation;
 import com.tomcvt.pixelmate.pipeline.OperationsPipeline;
 import com.tomcvt.pixelmate.pipeline.PipelineBuilder;
 import com.tomcvt.pixelmate.utility.ImageReader;
@@ -35,15 +36,12 @@ public class PipelineManager {
 
     public void createDefaultPipeline(MultipartFile uploadImage) {
         BufferedImage image = ImageReader.loadImage(uploadImage);
-        if (image == null) {
-            System.out.println("Loaded image for session " + sessionId + ": " + image);
-            throw new RuntimeException("Failed to load image from upload");
-        }
         this.pipeline = new OperationsPipeline(image, sessionId, cacheDir);
         //TODO here change to dynamic reflection from map parameters constructor
         this.pipeline = PipelineBuilder.builder()
-                .add(new EdgeDetectionOperation(), EdgeDetectionOperation.createDefaultParams())
-                .add(new ThickenEdgesOperation(), ThickenEdgesOperation.createDefaultParams())
+                .add(new KMeansOperation(), KMeansOperation.createDefaultPipelineParams())
+                .add(new EdgeDetectionOperation(), EdgeDetectionOperation.createDefaultPipelineParams())
+                .add(new ThickenEdgesOperation(), ThickenEdgesOperation.createDefaultPipelineParams())
                 .buildNodes(this.pipeline);
     }
 

@@ -25,7 +25,7 @@ public class OperationsPipeline {
         this.cacheDir = cacheDir;
         this.savedOriginalRelPath = ImageSaver.saveImage(cacheDir, sessionId, "original", original);
         resultCache.add(ImageFrame.fromBufferedImage(original));
-        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
+        urlList.add("/generated/" + savedOriginalRelPath);
     }
 
     public OperationsPipeline(List<PipelineNode<?>> nodes) {
@@ -36,12 +36,12 @@ public class OperationsPipeline {
         this.urlList.clear();
         this.resultCache.clear();
         resultCache.add(ImageFrame.fromBufferedImage(original));
-        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
+        urlList.add("/generated/" + savedOriginalRelPath);
     }
 
     public void clearUrls() {
         this.urlList.clear();
-        urlList.add("/generated/" + savedOriginalRelPath + getTimeStampString());
+        urlList.add("/generated/" + savedOriginalRelPath);
     }
 
     public void setSessionId(String sessionId) {
@@ -82,22 +82,29 @@ public class OperationsPipeline {
         }
         if (startIndex > resultCache.size() - 1)
             throw new IllegalArgumentException("Pipeline has not been run up to index " + startIndex);
-        run(ImageFrame.fromBufferedImage(original), startIndex);
+        run(null, startIndex);
     }
 
     public void run(ImageFrame inputImage, int startIndex) {
+        //null inputImage means use cached result
+        if (inputImage == null) {
+            inputImage = resultCache.get(startIndex);
+        }
         ImageFrame currentImage = inputImage;
         clearIntermediateResultsFrom(startIndex);
         for (int i = startIndex; i < nodes.size(); i++) {
             PipelineNode<?> node = nodes.get(i);
-
+            // Special case: if the operation is EDGE_DETECTION, use the original image as input
+            if (node.getOperation().getName() == "EDGE_DETECTION") {
+                currentImage = resultCache.get(0);
+            }
             currentImage = node.process(currentImage);
             if (currentImage == null) {
                 throw new RuntimeException("Operation " + node.getOperation().getName() + " returned null image.");
             }
-            BufferedImage bufferedResult = currentImage.getBufferedImage(currentImage.getLastResult());
+            BufferedImage bufferedResult = currentImage.getAsBufferedLast();
             String relPath = ImageSaver.saveImage(cacheDir, sessionId, "result_" + i, bufferedResult);
-            urlList.add("/generated/" + relPath + getTimeStampString());
+            urlList.add("/generated/" + relPath);
             resultCache.add(currentImage);
         }
     }

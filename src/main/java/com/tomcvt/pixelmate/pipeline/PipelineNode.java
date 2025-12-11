@@ -46,7 +46,8 @@ public class PipelineNode<P extends OperationParameters> {
     }
 
     public void updateParameters(Map<String, Object> values) {
-        P newParams = operation.parseParameters(values);
+        P oldParams = getParameters();
+        P newParams = operation.parsePipelineParameters(oldParams, values);
         setParameters(newParams);
     }
 
