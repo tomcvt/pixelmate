@@ -37,9 +37,6 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
     @Override
     public ImageFrame apply(ImageFrame input, RadiusParams parameters) {
         BufferedImage edges = input.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.BINARY, ImageFrame.EditPath.GRAYSCALE);
-        if (edges.getType() != BufferedImage.TYPE_BYTE_BINARY) {
-            throw new IllegalArgumentException("Input image must be binary (black and white)");
-        }
         if (parameters.getRadius() == 0) {
             return ImageFrame.with(input, edges, ImageFrame.ImageType.BINARY);
             //return input;
@@ -47,7 +44,7 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
         }
         int width = edges.getWidth();
         int height = edges.getHeight();
-        BufferedImage thick = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
+        BufferedImage thick = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int radius = parameters.getRadius() != null ? parameters.getRadius() : 1;
         for (int y = radius; y < height - radius; y++) {
             for (int x = radius; x < width - radius; x++) {
@@ -56,7 +53,7 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
                     for (int dx = -radius; dx <= radius; dx++)
                         if ((edges.getRGB(x + dx, y + dy) & 0x00FFFFFF) == 0x00000000)
                             black = true;
-                thick.setRGB(x, y, black ? 0xFF000000 : 0xFFFFFFFF);
+                thick.setRGB(x, y, black ? 0xFF000000 : edges.getRGB(x, y));
             }
         }
         return ImageFrame.with(input, thick, ImageFrame.ImageType.BINARY);

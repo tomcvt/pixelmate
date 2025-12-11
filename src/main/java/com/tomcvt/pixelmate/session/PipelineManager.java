@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamSpec;
+import com.tomcvt.pixelmate.model.operations.ApplyEdgesOperation;
 import com.tomcvt.pixelmate.model.operations.EdgeDetectionOperation;
 import com.tomcvt.pixelmate.model.operations.KMeansOperation;
 import com.tomcvt.pixelmate.model.operations.ThickenEdgesOperation;
@@ -42,6 +43,7 @@ public class PipelineManager {
                 .add(new KMeansOperation(), KMeansOperation.createDefaultPipelineParams())
                 .add(new EdgeDetectionOperation(), EdgeDetectionOperation.createDefaultPipelineParams())
                 .add(new ThickenEdgesOperation(), ThickenEdgesOperation.createDefaultPipelineParams())
+                .add(new ApplyEdgesOperation(), ApplyEdgesOperation.createDefaultPipelineParams())
                 .buildNodes(this.pipeline);
     }
 

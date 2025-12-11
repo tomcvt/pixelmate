@@ -50,7 +50,7 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
     public BufferedImage applySobel(BufferedImage input, int threshold) {
         int width = input.getWidth();
         int height = input.getHeight();
-        BufferedImage output = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
+        BufferedImage output = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         int[][] gx = {
                 { -1, 0, 1 },
@@ -77,7 +77,7 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
                 if (g > threshold)
                     output.setRGB(x, y, 0xFF000000); // black
                 else
-                    output.setRGB(x, y, 0xFFFFFFFF); // white
+                    output.setRGB(x, y, 0x00FFFFFF); // white
             }
         }
         return output;
