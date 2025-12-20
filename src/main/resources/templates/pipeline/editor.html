@@ -4,29 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Pipeline Editor</title>
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-			margin: 2em;
-		}
-
-		.row {
-			display: flex;
-			flex-direction: row;
-			gap: 1em;
-			margin-top: 1em;
-		}
-
-		.img-preview {
-			max-width: 200px;
-			max-height: 200px;
-			border: 1px solid #ccc;
-		}
-
-		.names-list {
-			margin-top: 1em;
-		}
-	</style>
+	<link rel="stylesheet" href="/css/editor.css">
 </head>
 
 <body>
@@ -127,7 +105,7 @@
 									opDiv.appendChild(valueSpan);
 									opDiv.appendChild(document.createElement('br'));
 								}
-								if (spec.type === 'Double') {
+								if (spec.type === 'Double' || spec.type === 'Float') {
 									const label = document.createElement('label');
 									label.textContent = spec.name + ': ';
 									label.htmlFor = `slider-${idx}-${spec.name}`;

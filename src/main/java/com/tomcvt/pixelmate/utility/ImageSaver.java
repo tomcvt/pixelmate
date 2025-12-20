@@ -60,4 +60,19 @@ public class ImageSaver {
         }
     }
 
+    public static BufferedImage loadImage(String path, String session, String imageName) {
+        try {
+            File inputfile = new File(path + "/" + session + "/" + imageName + ".png");
+            if (inputfile.exists()) {
+                return ImageIO.read(inputfile);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Error loading image: ", e);
+            throw new RuntimeException(e);
+            //return null;
+        }
+    }
+
 }

@@ -10,6 +10,7 @@ application-dev.yml
 logs/
 *.log
 cached-data/
+README.md
 
 ### STS ###
 .apt_generated

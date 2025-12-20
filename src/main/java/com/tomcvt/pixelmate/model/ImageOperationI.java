@@ -8,6 +8,7 @@ import com.tomcvt.pixelmate.parameters.OperationParameters;
 
 public interface ImageOperationI<P extends OperationParameters> {
     ImageFrame apply(ImageFrame input, P parameters);
+    SimpleImageFrame applySimple(SimpleImageFrame input, P parameters);
     String getName();
     List<ParamSpec> getParamSpecs();
     P parsePipelineParameters(Map<String, Object> values);

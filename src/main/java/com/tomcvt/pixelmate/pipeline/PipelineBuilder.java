@@ -32,4 +32,14 @@ public class PipelineBuilder {
         existingPipeline.clearCacheAndUrls();
         return existingPipeline;
     }
+
+    public SimpleOperationsPipeline buildSimpleNodes(SimpleOperationsPipeline existingPipeline) {
+        existingPipeline.getNodes().clear();
+        for (int i = 0; i < nodes.size(); i++) {
+            nodes.get(i).setIndex(i);
+        }
+        existingPipeline.setNodes(nodes);
+        existingPipeline.clearCacheAndUrls();
+        return existingPipeline;
+    }
 }

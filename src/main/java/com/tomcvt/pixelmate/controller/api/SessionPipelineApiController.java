@@ -13,17 +13,19 @@ import com.tomcvt.pixelmate.session.PipelineManager;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RestController
-@RequestMapping("/api/session/pipeline")
-public class SessionPipelineApi {
+@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/extended/session/pipeline")
+public class SessionPipelineApiController {
     private final PipelineManager pipelineManager;
 
-    public SessionPipelineApi(PipelineManager pipelineManager) {
+    public SessionPipelineApiController(PipelineManager pipelineManager) {
         this.pipelineManager = pipelineManager;
     }
 

@@ -21,3 +21,11 @@ com:
 
 pixelmate:
   cache-dir: cached-data
+  img-constraints:
+    max-width: 1920
+    max-height: 1920
+    max-pixels: 2073600 # 1920x1080
+    size-limit-bytes: 8294400
+  limits:
+    active-pipelines: 10
+    memory-usage-mb: 360 # img limit x 3 (approx per running pipeline) x 1.5 (overhead) x working pipelines (10)

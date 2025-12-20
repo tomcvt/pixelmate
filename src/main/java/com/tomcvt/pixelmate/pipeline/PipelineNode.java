@@ -6,9 +6,11 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.OperationParameters;
 
 public class PipelineNode<P extends OperationParameters> {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PipelineNode.class);
     private final ImageOperationI<P> operation;
     private P parameters;
     private int index;
@@ -34,6 +36,10 @@ public class PipelineNode<P extends OperationParameters> {
         ImageFrame result = operation.apply(input, parameters);
         return result;
     }
+    public SimpleImageFrame process(SimpleImageFrame input) {
+        SimpleImageFrame result = operation.applySimple(input, parameters);
+        return result;
+    }
     public void setIndex(int index) {
         this.index = index;
     }
@@ -47,8 +53,13 @@ public class PipelineNode<P extends OperationParameters> {
 
     public void updateParameters(Map<String, Object> values) {
         P oldParams = getParameters();
-        P newParams = operation.parsePipelineParameters(oldParams, values);
-        setParameters(newParams);
+        try {
+            P newParams = operation.parsePipelineParameters(oldParams, values);
+            setParameters(newParams);
+        } catch (Exception e) {
+            log.error("Error parsing parameters for operation {}: {}", operation.getName(), e.getMessage());
+            throw e;
+        }
     }
 
 }

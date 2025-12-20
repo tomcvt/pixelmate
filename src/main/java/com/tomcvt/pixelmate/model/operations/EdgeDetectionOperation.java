@@ -7,6 +7,7 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.EdgeDetectionParams;
 
 public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionParams> {
@@ -40,6 +41,16 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
         BufferedImage input = inputImage.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.GRAY, ImageFrame.EditPath.COLOR);
         BufferedImage output = applySobel(input, threshold);
         return ImageFrame.with(inputImage, output, ImageFrame.ImageType.BINARY);
+    }
+
+    @Override
+    public SimpleImageFrame applySimple(SimpleImageFrame inputImage, EdgeDetectionParams parameters) {
+        int threshold = parameters.getThreshold() != null ? parameters.getThreshold() : 128;
+        BufferedImage input = inputImage.getEdgeImage();
+        BufferedImage grayInput = new BufferedImage(input.getWidth(), input.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        grayInput.getGraphics().drawImage(input, 0, 0, null);
+        BufferedImage output = applySobel(grayInput, threshold);
+        return inputImage.withEdge(output);
     }
 
     @Override
@@ -79,6 +90,15 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
                 else
                     output.setRGB(x, y, 0x00FFFFFF); // white
             }
+        }
+
+        for (int x = 0; x < width; x++) {
+            output.setRGB(x, 0, 0x00FFFFFF);
+            output.setRGB(x, height - 1, 0x00FFFFFF);
+        }
+        for (int y = 0; y < height; y++) {
+            output.setRGB(0, y, 0x00FFFFFF);
+            output.setRGB(width - 1, y, 0x00FFFFFF);
         }
         return output;
     }

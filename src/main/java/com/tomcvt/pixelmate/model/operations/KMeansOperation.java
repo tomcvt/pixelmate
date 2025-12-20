@@ -7,6 +7,7 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.KMeansParams;
 import com.tomcvt.pixelmate.parameters.KMeansParamsRestricted;
 import com.tomcvt.pixelmate.utility.KMeansQuantizer;
@@ -52,10 +53,14 @@ public class KMeansOperation implements ImageOperationI<KMeansParams> {
                 seed);
         return ImageFrame.with(input, outputImage, ImageFrame.ImageType.ARGB);
     }
-    
-
-
-
-    // Other methods like apply(), getName(), getParamSpecs() would be here
-    
+    @Override
+    public SimpleImageFrame applySimple(SimpleImageFrame input, KMeansParams parameters) {
+        BufferedImage inputImage = input.getColoredImage();
+        BufferedImage outputImage = KMeansQuantizer.quantize(inputImage,
+                parameters.getK(),
+                parameters.getMaxIterations(),
+                parameters.getEps(),
+                seed);
+        return input.withColored(outputImage);
+    }
 }

@@ -11,10 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamSpec;
-import com.tomcvt.pixelmate.model.operations.ApplyEdgesOperation;
-import com.tomcvt.pixelmate.model.operations.EdgeDetectionOperation;
-import com.tomcvt.pixelmate.model.operations.KMeansOperation;
-import com.tomcvt.pixelmate.model.operations.ThickenEdgesOperation;
+import com.tomcvt.pixelmate.model.operations.*;
 import com.tomcvt.pixelmate.pipeline.OperationsPipeline;
 import com.tomcvt.pixelmate.pipeline.PipelineBuilder;
 import com.tomcvt.pixelmate.utility.ImageReader;
@@ -48,38 +45,41 @@ public class PipelineManager {
     }
 
     public OperationsPipeline getPipeline() {
+        if (pipeline == null) {
+            throw new IllegalStateException("Pipeline has not been created yet.");
+        }
         return pipeline;
     }
 
     public List<String> getOperationNames() {
-        return pipeline.getOperationNames();
+        return getPipeline().getOperationNames();
     }
 
     public List<String> getUrlList() {
-        return pipeline.getUrlList();
+        return getPipeline().getUrlList();
     }
 
     public List<String> runPipeline() {
-        pipeline.run();
-        return pipeline.getUrlList();
+        getPipeline().run();
+        return getPipeline().getUrlList();
     }
 
     public List<String> runFromIndex(int index) {
-        pipeline.run(index);
-        return pipeline.getUrlList();
+        getPipeline().run(index);
+        return getPipeline().getUrlList();
     }
 
     public List<String> updateOperationParamsAndRun(int index, Map<String, Object> values) {
-        pipeline.updateNodeParameters(index, values);
-        pipeline.run(index);
-        return pipeline.getUrlList();
+        getPipeline().updateNodeParameters(index, values);
+        getPipeline().run(index);
+        return getPipeline().getUrlList();
     }
 
     public List<List<ParamSpec>> getOperationsParamSpecs() {
-        return pipeline.getOperationsParamSpecs();
+        return getPipeline().getOperationsParamSpecs();
     }
 
     public List<OperationInfoDto> getOperationsInfo() {
-        return pipeline.getOperationsInfo();
+        return getPipeline().getOperationsInfo();
     }
 }

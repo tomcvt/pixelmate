@@ -24,7 +24,7 @@ public class RadiusParams implements OperationParameters {
                 throw new IllegalArgumentException("Invalid radius value: " + params.get(PARAM_RADIUS));
             }
             if (radius < MIN_RADIUS || radius > MAX_RADIUS) {
-                throw new IllegalArgumentException("Radius value out of bounds: " + radius);
+                throw new IllegalArgumentException("Radius value out of bounds: " + radius + " : " + getRangeString());
             }
         }
         return new RadiusParams(radius);
@@ -41,7 +41,7 @@ public class RadiusParams implements OperationParameters {
                 throw new IllegalArgumentException("Invalid radius value: " + values.get(PARAM_RADIUS));
             }
             if (radius < MIN_RADIUS || radius > MAX_RADIUS) {
-                throw new IllegalArgumentException("Radius value out of bounds: " + radius);
+                throw new IllegalArgumentException("Radius value out of bounds: " + radius + " : " + getRangeString());
             }
         }
         return new RadiusParams(radius);
@@ -50,6 +50,10 @@ public class RadiusParams implements OperationParameters {
         return List.of(
             new ParamSpec(PARAM_RADIUS, RADIUS_TYPE, DEFAULT_RADIUS, MIN_RADIUS, MAX_RADIUS)
         );
+    }
+
+    private static String getRangeString() {
+        return " [" + MIN_RADIUS + " - " + MAX_RADIUS + "]";
     }
 
     private final Integer radius;
