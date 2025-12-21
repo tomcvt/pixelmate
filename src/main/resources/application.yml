@@ -29,3 +29,11 @@ pixelmate:
   limits:
     active-pipelines: 10
     memory-usage-mb: 360 # img limit x 3 (approx per running pipeline) x 1.5 (overhead) x working pipelines (10)
+  security:
+    superuser:
+      name: ${SUPERUSER_NAME}
+      password: ${SUPERUSER_PASSWORD}
+  network:
+    ban-treshold-minute: 100
+    ban-duration-minute: 60
+    requsts-per-hour: 500

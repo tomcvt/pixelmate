@@ -11,6 +11,7 @@ public interface ImageOperationI<P extends OperationParameters> {
     SimpleImageFrame applySimple(SimpleImageFrame input, P parameters);
     String getName();
     List<ParamSpec> getParamSpecs();
+    OperationType getOperationType();
     P parsePipelineParameters(Map<String, Object> values);
     P parsePipelineParameters(P oldParams, Map<String, Object> values);
     P getDefaultPipelineParameters();

@@ -8,10 +8,10 @@ import com.tomcvt.pixelmate.dto.ParamSpec;
 public class EdgeQuantizationParams implements OperationParameters {
     public static final String PARAM_BLOCK_SIZE = "blockSize";
     public static final String PARAM_THRESHOLD = "threshold";
-    public static final String BLOCK_SIZE_TYPE = "Integer";
+    public static final String BLOCK_SIZE_TYPE = "Integer(2^n)";
     public static final String THRESHOLD_TYPE = "Float";
     public static final Integer DEFAULT_BLOCK_SIZE = 4;
-    public static final Float DEFAULT_THRESHOLD = 0.1f;
+    public static final Float DEFAULT_THRESHOLD = 0.15f;
     public static final Integer MIN_BLOCK_SIZE = 1;
     public static final Integer MAX_BLOCK_SIZE = 64;
     public static final Float MIN_THRESHOLD = 0.0f;

@@ -17,6 +17,8 @@ public class SimpleOperationsPipeline {
     private List<String> imageNames = new ArrayList<>();
     private String sessionId;
     private String cacheDir;
+    private List<Integer> lastColoredIndex = new ArrayList<>();
+    private Integer lastColorContext = null;
     private String savedOriginalRelPath;
 
     public SimpleOperationsPipeline(BufferedImage original, String sessionId, String cacheDir) {
@@ -69,9 +71,9 @@ public class SimpleOperationsPipeline {
 
     public void run() {
         run(
-            SimpleImageFrame.fromBufferedImage(
-                ImageSaver.loadImage(cacheDir, sessionId, "original")
-            ), 0);
+                SimpleImageFrame.fromBufferedImage(
+                        ImageSaver.loadImage(cacheDir, sessionId, "original")),
+                0);
     }
 
     public void run(SimpleImageFrame inputImage) {
@@ -89,19 +91,27 @@ public class SimpleOperationsPipeline {
 
     public void firstRun() {
         SimpleImageFrame currentImage = SimpleImageFrame.fromBufferedImage(
-            ImageSaver.loadImage(cacheDir, sessionId, "original")
-        );
+                ImageSaver.loadImage(cacheDir, sessionId, "original"));
+        lastColorContext = -1; // original image is color context
         for (int i = 0; i < nodes.size(); i++) {
             PipelineNode<?> node = nodes.get(i);
-            // Special case: if the operation is EDGE_DETECTION, use the original image as input
+            // Special case: if the operation is EDGE_DETECTION, use the original image as
+            // input
             if (node.getOperation().getName().equals("EDGE_DETECTION")) {
                 currentImage = currentImage.withEdge(
-                    ImageSaver.loadImage(cacheDir, sessionId, "original")
-                );
+                        ImageSaver.loadImage(cacheDir, sessionId, "original"));
             }
             currentImage = node.process(currentImage);
             if (currentImage == null) {
                 throw new RuntimeException("Operation " + node.getOperation().getName() + " returned null image.");
+            }
+            lastColoredIndex.add(lastColorContext);
+            switch (node.getOperation().getOperationType()) {
+                case COLOR -> {
+                    lastColorContext = i;
+                }
+                default -> {
+                }
             }
             BufferedImage bufferedResult = currentImage.getCurrentImage();
             String relPath = ImageSaver.saveImage(cacheDir, sessionId, "result_" + i, bufferedResult);
@@ -111,28 +121,43 @@ public class SimpleOperationsPipeline {
     }
 
     public void run(SimpleImageFrame inputImage, int startIndex) {
-        //null inputImage means use cached result
+        // null inputImage means use cached result
         if (inputImage == null) {
             String fromImageName = imageNames.get(startIndex);
             inputImage = SimpleImageFrame.fromBufferedImage(
-                ImageSaver.loadImage(cacheDir, sessionId, fromImageName)
-            );
+                    ImageSaver.loadImage(cacheDir, sessionId, fromImageName));
         }
         SimpleImageFrame currentImage = inputImage;
-        //clearIntermediateResultsFrom(startIndex);
+        var firstNode = nodes.get(startIndex);
+        // determine color context for first node
+        switch (firstNode.getOperation().getOperationType()) {
+            case EDGE -> {
+                int lastColoredOpIndex = lastColoredIndex.get(startIndex); // for operation at startIndex, get its last
+                                                                           // colored op index
+                String name;
+                if (lastColoredOpIndex == -1) {
+                    name = "original";
+                } else {
+                    name = imageNames.get(lastColoredOpIndex + 1); // +1 because original is at index 0
+                }
+                currentImage = currentImage.withColored(
+                        ImageSaver.loadImage(
+                                cacheDir,
+                                sessionId,
+                                name // +1 because original is at index 0
+                        ));
+            }
+            default -> {
+            }
+        }
         for (int i = startIndex; i < nodes.size(); i++) {
             PipelineNode<?> node = nodes.get(i);
-            // Special case: if the operation is EDGE_DETECTION, use the original image as input
-            if (node.getOperation().getName() == "EDGE_DETECTION") {
-                log.info("--------DEBUG: Using original image for EDGE_DETECTION operation");
+            if (node.getOperation().getName().equals("EDGE_DETECTION")) {
+                // log.info("--------DEBUG: Using original image for EDGE_DETECTION operation");
                 currentImage = currentImage.withEdge(
-                    ImageSaver.loadImage(cacheDir, sessionId, "original")
-                );
+                        ImageSaver.loadImage(cacheDir, sessionId, "original"));
             }
             currentImage = node.process(currentImage);
-            if (currentImage == null) {
-                throw new RuntimeException("Operation " + node.getOperation().getName() + " returned null image.");
-            }
             BufferedImage bufferedResult = currentImage.getCurrentImage();
             String relPath = ImageSaver.saveImage(cacheDir, sessionId, "result_" + i, bufferedResult);
             imageNames.set(i + 1, "result_" + i);
@@ -160,9 +185,8 @@ public class SimpleOperationsPipeline {
         List<OperationInfoDto> infos = new ArrayList<>();
         for (PipelineNode<?> node : nodes) {
             infos.add(new OperationInfoDto(
-                node.getOperation().getName(),
-                node.getOperation().getParamSpecs()
-            ));
+                    node.getOperation().getName(),
+                    node.getOperation().getParamSpecs()));
         }
         return infos;
     }
@@ -172,4 +196,8 @@ public class SimpleOperationsPipeline {
             urlList.remove(urlList.size() - 1);
         }
     }
+
+    // TODO implement bfs on edge thickening to optimize
+    // TODO add flag for edge skipping
+
 }

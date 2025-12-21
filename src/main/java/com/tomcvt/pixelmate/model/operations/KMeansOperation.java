@@ -7,6 +7,7 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.KMeansParams;
 import com.tomcvt.pixelmate.parameters.KMeansParamsRestricted;
@@ -14,12 +15,17 @@ import com.tomcvt.pixelmate.utility.KMeansQuantizer;
 
 public class KMeansOperation implements ImageOperationI<KMeansParams> {
     public static final String NAME = "KMEANS_CLUSTERING";
+    public final OperationType operationType = OperationType.COLOR;
     private final long seed = 123456789L; // Fixed seed for reproducibility
     public KMeansOperation() {
     }
 
     public static KMeansParams createDefaultPipelineParams() {
         return KMeansParamsRestricted.FACTORY.fromMap(null);
+    }
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     @Override

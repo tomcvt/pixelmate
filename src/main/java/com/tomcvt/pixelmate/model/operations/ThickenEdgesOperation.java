@@ -8,12 +8,19 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 
 import com.tomcvt.pixelmate.parameters.RadiusParams;
 
 public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
     public static final String NAME = "THICKEN_EDGES";
+    public final OperationType operationType = OperationType.EDGE;
+
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
+    }
 
     public static RadiusParams createDefaultPipelineParams() {
         return new RadiusParams(RadiusParams.DEFAULT_RADIUS);
@@ -74,6 +81,9 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
         return NAME;
     }
 
+
+    // from edges op we get either black or transparent white pixels as edges
+    // so only 0xFF000000 is edge, everything else is non-edge
     private BufferedImage thickenEdges(BufferedImage edges, int radius) {
         int width = edges.getWidth();
         int height = edges.getHeight();
@@ -84,7 +94,7 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
                 for (int dy = -radius; dy <= radius; dy++)
                     for (int dx = -radius; dx <= radius; dx++) {
                         
-                        if ((edges.getRGB(x + dx, y + dy) & 0x00FFFFFF) == 0x00000000)
+                        if (edges.getRGB(x + dx, y + dy) == 0xFF000000)
                             black = true;
                     }
                 thick.setRGB(x, y, black ? 0xFF000000 : edges.getRGB(x, y));

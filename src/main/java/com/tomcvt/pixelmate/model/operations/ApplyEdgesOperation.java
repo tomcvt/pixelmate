@@ -8,14 +8,20 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.EmptyParams;
 
 public class ApplyEdgesOperation implements ImageOperationI<EmptyParams> {
     public static final String NAME = "APPLY_EDGES";
+    public final OperationType operationType = OperationType.COLOR;
 
     public static EmptyParams createDefaultPipelineParams() {
         return new EmptyParams();
+    }
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
     @Override
     public List<ParamSpec> getParamSpecs() {

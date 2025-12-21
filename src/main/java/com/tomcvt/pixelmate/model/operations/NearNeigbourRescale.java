@@ -7,13 +7,19 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.BlockSizeParams;
 
 public class NearNeigbourRescale implements ImageOperationI<BlockSizeParams> {
     private static final String NAME = "NEAR_NEIGHBOUR_RESCALE";
+    private final OperationType operationType = OperationType.COLOR;
     public static BlockSizeParams createDefaultPipelineParams() {
         return BlockSizeParams.DEFAULT_PARAMS;
+    }
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
     @Override
     public String getName() {

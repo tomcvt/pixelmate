@@ -7,17 +7,21 @@ import java.util.Map;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.EdgeQuantizationParams;
 
-import edu.mines.jtk.mesh.TetMesh.Edge;
-
 public class EdgeQuantizationOperation implements ImageOperationI<EdgeQuantizationParams> {
     private static final String OPERATION_NAME = "EDGE_QUANTIZATION";
+    private final OperationType operationType = OperationType.EDGE;
 
     @Override
     public String getName() {
         return OPERATION_NAME;
+    }
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     public static EdgeQuantizationParams createDefaultPipelineParams() {

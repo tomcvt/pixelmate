@@ -1,20 +1,30 @@
 package com.tomcvt.pixelmate.model.operations;
 
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.rmi.server.Operation;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
+import com.tomcvt.pixelmate.model.OperationType;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.parameters.EdgeDetectionParams;
 
 public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionParams> {
     public static final String NAME = "EDGE_DETECTION";
+    public final OperationType operationType = OperationType.EDGE;
 
     public static EdgeDetectionParams createDefaultPipelineParams() {
         return new EdgeDetectionParams(EdgeDetectionParams.DEFAULT_THRESHOLD);
+    }
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
     
     @Override
@@ -39,6 +49,10 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
     public ImageFrame apply(ImageFrame inputImage, EdgeDetectionParams parameters) {
         int threshold = parameters.getThreshold() != null ? parameters.getThreshold() : 128;
         BufferedImage input = inputImage.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.GRAY, ImageFrame.EditPath.COLOR);
+        if (threshold >= EdgeDetectionParams.MAX_THRESHOLD) {
+            BufferedImage output = noEdge(input);
+            return ImageFrame.with(inputImage, output, ImageFrame.ImageType.BINARY);
+        }
         BufferedImage output = applySobel(input, threshold);
         return ImageFrame.with(inputImage, output, ImageFrame.ImageType.BINARY);
     }
@@ -46,6 +60,10 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
     @Override
     public SimpleImageFrame applySimple(SimpleImageFrame inputImage, EdgeDetectionParams parameters) {
         int threshold = parameters.getThreshold() != null ? parameters.getThreshold() : 128;
+        if (threshold >= EdgeDetectionParams.MAX_THRESHOLD) {
+            BufferedImage output = noEdge(inputImage.getEdgeImage());
+            return inputImage.withEdge(output);
+        }
         BufferedImage input = inputImage.getEdgeImage();
         BufferedImage grayInput = new BufferedImage(input.getWidth(), input.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
         grayInput.getGraphics().drawImage(input, 0, 0, null);
@@ -100,6 +118,16 @@ public class EdgeDetectionOperation implements ImageOperationI<EdgeDetectionPara
             output.setRGB(0, y, 0x00FFFFFF);
             output.setRGB(width - 1, y, 0x00FFFFFF);
         }
+        return output;
+    }
+
+    private BufferedImage noEdge(BufferedImage input) {
+        int width = input.getWidth();
+        int height = input.getHeight();
+        BufferedImage output = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        int[] data = new int[width * height];
+        Arrays.fill(data, 0x00FFFFFF); 
+        output.setRGB(0, 0, width, height, data, 0, width);
         return output;
     }
 

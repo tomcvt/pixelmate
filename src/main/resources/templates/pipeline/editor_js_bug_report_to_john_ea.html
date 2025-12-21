@@ -147,12 +147,22 @@
 									slider.id = `slider-${idx}-${spec.name}`;
 									slider.min = spec.minValue;
 									slider.max = spec.maxValue;
-									//for some reason slider.value is not being set correctly
+									console.log('Default value for', spec.name, 'is', spec.defaultValue);
+									console.log('Min value for', spec.name, 'is', spec.minValue);
+									console.log('Max value for', spec.name, 'is', spec.maxValue);
+									console.log(slider.value);
+									//console.log(typeof spec.defaultValue);
+									console.log(String(spec.defaultValue));
 									slider.value = String(spec.defaultValue);
+									console.log('Slider value for', spec.name, 'set to', slider.value);
+									console.log('Slider min for', spec.name, 'is', slider.min);
+									console.log('Slider max for', spec.name, 'is', slider.max);
+									console.log(typeof slider.value);
 									slider.step = (spec.maxValue - spec.minValue) / 100 || 0.01;
 									slider.style.width = '120px';
 									const valueSpan = document.createElement('span');
 									valueSpan.textContent = slider.value;
+									
 									valueSpan.style.marginLeft = '0.5em';
 									slider.oninput = function () {
 										valueSpan.textContent = slider.value;

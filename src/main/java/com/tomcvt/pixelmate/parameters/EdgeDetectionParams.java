@@ -10,7 +10,7 @@ public class EdgeDetectionParams implements OperationParameters {
     public static final String PARAM_THRESHOLD = "threshold";
     public static final String THRESHOLD_TYPE = "Integer";
     public static final Integer MIN_THRESHOLD = 0;
-    public static final Integer MAX_THRESHOLD = 255;
+    public static final Integer MAX_THRESHOLD = 256; //256 - special case no edge
     public static final ParamsFactory<EdgeDetectionParams> FACTORY = EdgeDetectionParams::fromMap;
     public static EdgeDetectionParams fromMap(Map<String, Object> params) {
         if (params == null) {

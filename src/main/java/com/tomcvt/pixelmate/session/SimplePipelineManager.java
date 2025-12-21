@@ -64,7 +64,8 @@ public class SimplePipelineManager {
         long estimatedImageSize = (long) width * height * 4; // Approximate size in bytes (ARGB)
         long estimatedRunningMemory = estimatedImageSize * 4; // 3 processing overhead * 1.3 safety margin 
         double estimatedRunningMemoryMB = estimatedRunningMemory / (1024.0 * 1024.0);
-        log.info("Estimated memory usage for processing image: {} x {} = {:.2f} MB", width, height, estimatedRunningMemoryMB);
+        String estimatedMB = String.format("%.2f", estimatedRunningMemoryMB);
+        log.info("Estimated memory usage for processing image: {} x {} = {} MB", width, height, estimatedMB);
         long currentMemUsage = pipelineInfoRegistry.getTotalEstimatedMemoryUsageBytes();
         if (currentMemUsage + estimatedRunningMemory > maxMemoryUsageBytes) {
             throw new IllegalStateException("Cannot create pipeline: estimated memory usage exceeds limit, try again later or with smaller image. MB left:" 
@@ -76,9 +77,8 @@ public class SimplePipelineManager {
         }
         var metadata = new PipelineMetadata(sessionId, estimatedRunningMemory, Instant.now());
         pipelineInfoRegistry.registerPipelineInfo(sessionId, metadata);
-        //log.info("Estimated memory usage for processing image: {} x {} {} bytes", width, height, estimatedRunningMemory);
         this.pipeline = new SimpleOperationsPipeline(image, sessionId, cacheDir);
-        //TODO here change to dynamic reflection from map parameters constructor
+        this.firstRunDone = false;
         this.pipeline = PipelineBuilder.builder()
                 .add(new KMeansOperation(), KMeansOperation.createDefaultPipelineParams())
                 .add(new NearNeigbourRescale(), NearNeigbourRescale.createDefaultPipelineParams())

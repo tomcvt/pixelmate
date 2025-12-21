@@ -7,7 +7,7 @@ import com.tomcvt.pixelmate.dto.ParamSpec;
 
 public class BlockSizeParams implements OperationParameters {
     public static final String PARAM_SIZE = "blockSize";
-    public static final String SIZE_TYPE = "Integer";
+    public static final String SIZE_TYPE = "Integer(2^n)";
     public static final Integer DEFAULT_SIZE = 4;
     public static final Integer MIN_SIZE = 1;
     public static final Integer MAX_SIZE = 64;
