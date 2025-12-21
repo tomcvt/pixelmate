@@ -1,9 +1,6 @@
 package com.tomcvt.pixelmate.model.operations;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.rmi.server.Operation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

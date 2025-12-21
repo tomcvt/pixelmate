@@ -34,6 +34,7 @@ pixelmate:
       name: ${SUPERUSER_NAME}
       password: ${SUPERUSER_PASSWORD}
   network:
-    ban-treshold-minute: 100
+    ban-threshold-minute: 100
     ban-duration-minute: 60
-    requsts-per-hour: 500
+    requests-per-hour: 500
+    default-ban-duration-minute: 60
