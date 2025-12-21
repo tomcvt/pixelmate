@@ -15,6 +15,8 @@ import jakarta.servlet.http.*;
 public class RateLimitingFilter extends OncePerRequestFilter {
     private final IpRegistry ipRegistry;
     private final BanRegistry banRegistry;
+    private final String [] excludedUri = { "/api/", "/generated/"};
+    private final String [] excludedIps = { "0.0.0.0.0.0.0.1"};
 
     public RateLimitingFilter(IpRegistry ipRegistry, BanRegistry banRegistry) {
         this.ipRegistry = ipRegistry;
@@ -30,6 +32,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (xff != null && !xff.isEmpty()) {
             clientIp = xff.split(",")[0].trim();
         }
+        for (String ip : excludedIps) {
+            if (clientIp.equals(ip)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+        String requestUri = request.getRequestURI();
+        for (String uri : excludedUri) {
+            if (requestUri.startsWith(uri)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
         if (banRegistry.isBanned(clientIp)) {
             response.setStatus(403); // Forbidden
             response.getWriter().write("IP " + clientIp + " is temporarily banned.");
