@@ -5,7 +5,7 @@ spring:
 
 server:
   address: 0.0.0.0
-  port: 8080
+  port: 8085
   forward-headers-strategy: framework
   servlet:
     context-path: /
@@ -27,7 +27,7 @@ pixelmate:
     max-pixels: 2073600 # 1920x1080
     size-limit-bytes: 8294400
   limits:
-    active-pipelines: 10
+    active-pipelines: 20
     memory-usage-mb: 360 # img limit x 3 (approx per running pipeline) x 1.5 (overhead) x working pipelines (10)
   security:
     superuser:

@@ -82,4 +82,13 @@ public class BanRegistry {
         return true;
     }
 
+
+    public void unbanIp(String ip) {
+        bannedIps.remove(ip);
+    }
+
+    public Map<String, Long> getBannedIPs() {
+        return bannedIps;
+    }
+
 }

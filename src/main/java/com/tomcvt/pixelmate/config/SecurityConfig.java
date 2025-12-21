@@ -9,14 +9,21 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.tomcvt.pixelmate.auth.AuthFailureHandler;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+    private final AuthFailureHandler authFailureHandler;
 
     private static final String[] WHITELIST = {
         "/**"
     };
+
+    public SecurityConfig(AuthFailureHandler authFailureHandler) {
+        this.authFailureHandler = authFailureHandler;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -26,6 +33,12 @@ public class SecurityConfig {
             .httpBasic(httpBasic -> httpBasic.disable())
             .authorizeHttpRequests((auth) -> auth
                 .anyRequest().permitAll()
+            )
+            .formLogin(login -> login.loginPage("/login")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/", false)
+                .failureHandler(authFailureHandler)
+                .permitAll()
             )
             .anonymous(Customizer.withDefaults());
         return http.build();

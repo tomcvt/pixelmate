@@ -12,6 +12,8 @@ public class ImageReader {
     public static BufferedImage loadImage(MultipartFile file) {
         try (InputStream is = file.getInputStream()) {
             BufferedImage image = ImageIO.read(is);
+            String colorModel = image.getColorModel().toString();
+            log.info("Loaded image with color model: {}", colorModel);
             return image;
         } catch (Exception e) {
             log.error("Error loading image: ", e);
