@@ -47,4 +47,11 @@ public class RequestCounter {
         this.hourWindowStartMillis = System.currentTimeMillis();
     }
 
+    @Override
+    public String toString() {
+        return "RequestCounter{" +
+                "banCounter=" + banCounter +
+                ", hourCounter=" + hourCounter +
+                '}';
+    }
 }

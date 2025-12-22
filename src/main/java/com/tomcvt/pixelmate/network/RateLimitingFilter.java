@@ -2,6 +2,10 @@ package com.tomcvt.pixelmate.network;
 
 import java.io.IOException;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -13,6 +17,7 @@ import jakarta.servlet.http.*;
 
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RateLimitingFilter.class);
     private final IpRegistry ipRegistry;
     private final BanRegistry banRegistry;
     private final String [] excludedUri = { "/api/", "/generated/"};
@@ -27,6 +32,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws IOException, ServletException {
+        
+
+        
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (user != null) {
+            log.info("Authenticated user {}, skipping rate limiting.", user.getUsername());
+            filterChain.doFilter(request, response);
+            return;
+        }
         String clientIp = request.getRemoteAddr();
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isEmpty()) {
@@ -45,7 +59,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 return;
             }
         }
-
         if (banRegistry.isBanned(clientIp)) {
             response.setStatus(403); // Forbidden
             response.getWriter().write("IP " + clientIp + " is temporarily banned.");

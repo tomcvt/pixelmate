@@ -91,4 +91,8 @@ public class BanRegistry {
         return bannedIps;
     }
 
+    public int getBannedIpCount() {
+        return bannedIps.size();
+    }
+
 }

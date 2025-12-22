@@ -52,6 +52,10 @@ public class IpRegistry {
         return true;
     }
 
+    public Map<String, RequestCounter> getIpRequestCounters() {
+        return ipRequestCounters;
+    }
+
     @Scheduled(fixedRate = 60 * 60 * 1000)
     public void resetHourlyCounters() {
         long currentTimeMillis = System.currentTimeMillis();

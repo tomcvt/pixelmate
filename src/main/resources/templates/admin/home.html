@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Admin Dashboard</title>
+    <link href="/css/main.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="content">
+        <form class="login-form" style="max-width: 700px;">
+            <h2>Admin Dashboard</h2>
+            <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 24px;">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/logging'">Logging Dashboard</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/banning'">Banning Dashboard</button>
+            </div>
+            <div class="panelOption" style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 24px;">
+                <div class="card">
+                    <h3 style="text-align:center; color: var(--color-heading);">Banned IPs</h3>
+                    <ul style="max-height: 120px; overflow-y: auto; font-size: 0.98rem;">
+                        <li th:each="entry : ${dashboardInfo.bannedIPs}" th:text="${entry.key} + ' (until ' + entry.value + ')'">127.0.0.1 (until 2025-12-22T12:00:00Z)</li>
+                        <li th:if="${#lists.isEmpty(dashboardInfo.bannedIPs)}">None</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="text-align:center; color: var(--color-heading);">Registered IPs</h3>
+                    <ul style="max-height: 120px; overflow-y: auto; font-size: 0.98rem;">
+                        <li th:each="entry : ${dashboardInfo.registeredIPs}" th:text="${entry.key} + ': ' + entry.value">127.0.0.1: {counters}</li>
+                        <li th:if="${#lists.isEmpty(dashboardInfo.registeredIPs)}">None</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="text-align:center; color: var(--color-heading);">Pipeline Info</h3>
+                    <ul style="max-height: 120px; overflow-y: auto; font-size: 0.98rem;">
+                        <li th:each="entry : ${dashboardInfo.pipelineInfo}" th:text="${entry.key} + ': ' + entry.value.estimatedMemoryUsageMB + ', created ' + entry.value.creationTime">sessionId: 12.34 MB, created 2025-12-22T12:00:00Z</li>
+                        <li th:if="${#lists.isEmpty(dashboardInfo.pipelineInfo)}">None</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="text-align:center; color: var(--color-heading);">Memory Usage</h3>
+                    <div style="font-size: 1.1rem; text-align: center; color: var(--color-subheading);" th:text="${dashboardInfo.memoryUsageInfo}">Total: 123.45 MB</div>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

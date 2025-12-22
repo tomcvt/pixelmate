@@ -17,4 +17,8 @@ public class AdminController {
     public String adminLogs() {
         return "admin/logging-dashboard";
     }
+    @GetMapping("/banning")
+    public String adminBanning() {
+        return "admin/banning-dashboard";
+    }
 }

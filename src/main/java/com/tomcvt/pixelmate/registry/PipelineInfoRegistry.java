@@ -63,4 +63,8 @@ public class PipelineInfoRegistry {
                 maxMemoryUsageBytes / (1024.0 * 1024.0));
     }
 
+    public Map<String, PipelineMetadata> getAllPipelineInfo() {
+        return pipelineInfoMap;
+    }
+
 }
