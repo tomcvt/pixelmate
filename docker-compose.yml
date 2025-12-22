@@ -1,0 +1,21 @@
+services:
+  pixelmate:
+    container_name: pixelmate-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION}
+    image: pixelmate:${APP_VERSION}
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env
+    volumes:
+      - logs:/app/logs
+      - disk_cache:/app/cached-data
+    restart: unless-stopped
+
+volumes:
+  logs:
+  disk_cache:

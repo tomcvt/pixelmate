@@ -55,6 +55,16 @@ body {
     padding: var(--space-md);
 }
 
+.content-full {
+    width: 100%;
+    margin: var(--space-xl) auto;
+    padding: var(--space-md);
+}
+
+.full {
+    width: 100%;
+}
+
 .content {
     max-width: 1200px;
     margin: var(--space-xl) auto;

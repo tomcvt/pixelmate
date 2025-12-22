@@ -2,10 +2,8 @@ package com.tomcvt.pixelmate.network;
 
 import java.io.IOException;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -34,12 +32,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             throws IOException, ServletException {
         
 
-        
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (user != null) {
-            log.info("Authenticated user {}, skipping rate limiting.", user.getUsername());
-            filterChain.doFilter(request, response);
-            return;
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            UserDetails user = (UserDetails) principal;
+            if (user != null) {
+                log.info("Authenticated user {}, skipping rate limiting.", user.getUsername());
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
         String clientIp = request.getRemoteAddr();
         String xff = request.getHeader("X-Forwarded-For");

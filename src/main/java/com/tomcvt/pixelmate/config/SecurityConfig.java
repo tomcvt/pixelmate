@@ -21,7 +21,8 @@ public class SecurityConfig {
     private final RateLimitingFilter rateLimitingFilter;
 
     private static final String[] WHITELIST = {
-        "/**"
+        "/**", "/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico",
+        "/login", "/error", "/api/public/**"
     };
 
     public SecurityConfig(AuthFailureHandler authFailureHandler, RateLimitingFilter rateLimitingFilter) {
@@ -36,6 +37,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
             .httpBasic(httpBasic -> httpBasic.disable())
             .authorizeHttpRequests((auth) -> auth
+                .requestMatchers(WHITELIST).permitAll()
                 .anyRequest().permitAll()
             )
             .formLogin(login -> login.loginPage("/login")

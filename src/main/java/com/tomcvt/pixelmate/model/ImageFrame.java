@@ -172,6 +172,7 @@ public class ImageFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private BufferedImage convertToBinary(BufferedImage image) {
         BufferedImage binaryImage = new BufferedImage(image.getWidth(), image.getHeight(),
                 BufferedImage.TYPE_BYTE_BINARY);
