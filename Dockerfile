@@ -25,7 +25,7 @@ COPY jvm-options.txt jvm-options.txt
 
 # Healthcheck
 HEALTHCHECK --interval=1m --timeout=3s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:8082/actuator/health || exit 1
+  CMD curl -f http://localhost:8085/actuator/health || exit 1
 
 EXPOSE 8085
 ENTRYPOINT ["sh", "-c", "java @jvm-options.txt -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar pixelmate.jar"]

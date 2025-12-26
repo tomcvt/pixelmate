@@ -4,6 +4,11 @@ import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -15,7 +20,9 @@ import com.tomcvt.pixelmate.pipeline.PipelineMetadata;
 import com.tomcvt.pixelmate.pipeline.SimpleOperationsPipeline;
 import com.tomcvt.pixelmate.registry.PipelineInfoRegistry;
 import com.tomcvt.pixelmate.service.SessionCleanupService;
+import com.fasterxml.jackson.databind.deser.impl.CreatorCandidate.Param;
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
+import com.tomcvt.pixelmate.dto.ParamInput;
 import com.tomcvt.pixelmate.dto.ParamSpec;
 import com.tomcvt.pixelmate.model.operations.*;
 import com.tomcvt.pixelmate.utility.ImageReader;
@@ -37,12 +44,17 @@ public class SimplePipelineManager {
     private String sessionId;
     private String cacheDir;
 
-    public SimplePipelineManager(@Value("${pixelmate.cache-dir}") String cacheDir, 
+    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final BlockingQueue<ParamInput> updateQueue = new LinkedBlockingQueue<>();
+    private final Object monitor = new Object();
+    private volatile boolean workerRunning = false;
+
+    public SimplePipelineManager(@Value("${pixelmate.cache-dir}") String cacheDir,
             @Value("${pixelmate.limits.memory-usage-mb}") long maxMemoryUsageMb,
             @Value("${pixelmate.img-constraints.max-height}") int maxHeight,
             @Value("${pixelmate.img-constraints.max-width}") int maxWidth,
             @Value("${pixelmate.img-constraints.max-pixels}") long maxPixels,
-            HttpSession httpSession, 
+            HttpSession httpSession,
             PipelineInfoRegistry pipelineInfoRegistry,
             SessionCleanupService sessionCleanupService) {
         this.cacheDir = cacheDir;
@@ -54,22 +66,23 @@ public class SimplePipelineManager {
         this.pipelineInfoRegistry = pipelineInfoRegistry;
         this.sessionCleanupService = sessionCleanupService;
     }
-    //TODO add method to create pipeline with stock image
+    // TODO add method to create pipeline with stock image
 
-    public void createDefaultPipeline(MultipartFile uploadImage) {
+    public synchronized void createDefaultPipeline(MultipartFile uploadImage) {
         BufferedImage image = ImageReader.loadImage(uploadImage);
         int width = image.getWidth();
         int height = image.getHeight();
         checkImageConstraints(width, height);
         long estimatedImageSize = (long) width * height * 4; // Approximate size in bytes (ARGB)
-        long estimatedRunningMemory = estimatedImageSize * 4; // 3 processing overhead * 1.3 safety margin 
+        long estimatedRunningMemory = estimatedImageSize * 4; // 3 processing overhead * 1.3 safety margin
         double estimatedRunningMemoryMB = estimatedRunningMemory / (1024.0 * 1024.0);
         String estimatedMB = String.format("%.2f", estimatedRunningMemoryMB);
         log.info("Estimated memory usage for processing image: {} x {} = {} MB", width, height, estimatedMB);
         long currentMemUsage = pipelineInfoRegistry.getTotalEstimatedMemoryUsageBytes();
         if (currentMemUsage + estimatedRunningMemory > maxMemoryUsageBytes) {
-            throw new IllegalStateException("Cannot create pipeline: estimated memory usage exceeds limit, try again later or with smaller image. MB left:" 
-                    + ((maxMemoryUsageBytes - currentMemUsage) / (1024.0 * 1024.0)));
+            throw new IllegalStateException(
+                    "Cannot create pipeline: estimated memory usage exceeds limit, try again later or with smaller image. MB left:"
+                            + ((maxMemoryUsageBytes - currentMemUsage) / (1024.0 * 1024.0)));
         }
         if (this.pipeline != null) {
             // Clear previous session cache
@@ -106,7 +119,7 @@ public class SimplePipelineManager {
 
     public List<String> runPipeline() {
         if (firstRunDone) {
-            //getPipeline().clearUrls();
+            // getPipeline().clearUrls();
             getPipeline().run();
         } else {
             firstRunDone = true;
@@ -120,11 +133,21 @@ public class SimplePipelineManager {
         return getPipeline().getUrlList();
     }
 
-    public List<String> updateOperationParamsAndRun(int index, Map<String, Object> values) {
-        getPipeline().updateNodeParameters(index, values);
-        getPipeline().run(index);
+    public List<String> updateOperationParamsAndRun(ParamInput paramInput) {
+        updateQueue.offer(paramInput);
+        startWorkerIfNeeded();
+        waitUntilQueueEmptyAndWorkerIdle();
         return getPipeline().getUrlList();
     }
+
+    /*
+     * public List<String> updateOperationParamsAndRun(int index, Map<String,
+     * Object> values) {
+     * getPipeline().updateNodeParameters(index, values);
+     * getPipeline().run(index);
+     * return getPipeline().getUrlList();
+     * }
+     */
 
     public List<List<ParamSpec>> getOperationsParamSpecs() {
         return getPipeline().getOperationsParamSpecs();
@@ -145,5 +168,64 @@ public class SimplePipelineManager {
         if (totalPixels > maxPixels) {
             throw new IllegalArgumentException("Image total pixels exceed maximum allowed: " + maxPixels);
         }
+    }
+
+    private void waitUntilQueueEmptyAndWorkerIdle() {
+        synchronized (monitor) {
+            while (!updateQueue.isEmpty() || workerRunning) {
+                try {
+                    monitor.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error("Waiting for pipeline updates interrupted", e);
+                    throw new RuntimeException("Waiting for pipeline updates interrupted", e);
+                }
+            }
+        }
+    }
+
+    private void startWorkerIfNeeded() {
+        synchronized (monitor) {
+            if (workerRunning) {
+                return;
+            }
+            workerRunning = true;
+        }
+        worker.submit(this::processUpdateQueue);
+    }
+
+    private void processUpdateQueue() {
+        try {
+            while (true) {
+                ParamInput paramInput = updateQueue.poll(500, TimeUnit.MILLISECONDS);
+                if (paramInput == null) {
+                    break; // Exit if no new tasks for a while
+                }
+                List<ParamInput> toProcess = new java.util.ArrayList<>();
+                toProcess.add(paramInput);
+                updateQueue.drainTo(toProcess);
+                int earliestIndex = applyUpdatesAndGetEarliestIndex(toProcess);
+                getPipeline().run(earliestIndex);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Pipeline update worker interrupted", e);
+        } finally {
+            synchronized (monitor) {
+                workerRunning = false;
+                monitor.notifyAll();
+            }
+        }
+    }
+
+    private int applyUpdatesAndGetEarliestIndex(List<ParamInput> updates) {
+        int earliestIndex = Integer.MAX_VALUE;
+        for (ParamInput paramInput : updates) {
+            getPipeline().updateNodeParameters(paramInput.index(), paramInput.values());
+            if (paramInput.index() < earliestIndex) {
+                earliestIndex = paramInput.index();
+            }
+        }
+        return earliestIndex;
     }
 }
