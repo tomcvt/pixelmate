@@ -3,7 +3,7 @@ services:
     container_name: pixelmate-app
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile2
       args:
         APP_VERSION: ${APP_VERSION}
     image: pixelmate:${APP_VERSION}

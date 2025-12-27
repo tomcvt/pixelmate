@@ -10,11 +10,10 @@ import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
 import com.tomcvt.pixelmate.session.SimplePipelineManager;
 
-import io.micrometer.core.ipc.http.HttpSender.Response;
-
 @RestController
 @RequestMapping("/api/session/pipeline")
 public class SimplePipelineApiController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SimplePipelineApiController.class);
     private final SimplePipelineManager pipelineManager;
 
     public SimplePipelineApiController(SimplePipelineManager pipelineManager) {
@@ -45,9 +44,10 @@ public class SimplePipelineApiController {
     }
 
     @PostMapping("/reset")
-    public ResponseEntity<?> resetPipeline() {
+    public ResponseEntity<Void> resetPipeline() {
         pipelineManager.clearPipeline();
-        var response = ResponseEntity.status(302).header("Location", "/upload");
-        return response.build();
+        ResponseEntity<Void> response = ResponseEntity.status(302).header("Location", "/upload").build();
+        log.info(response.toString());
+        return response;
     }
 }

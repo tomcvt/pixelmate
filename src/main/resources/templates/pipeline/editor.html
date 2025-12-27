@@ -204,24 +204,11 @@
 		}
 
 		// Reset button logic
-		document.getElementById('resetBtn').onclick = function () {
-			fetch('/api/session/pipeline/reset', { method: 'POST' })
-				.then(async res => {
-					if (res.status === 302) {
-						// Get redirect URL from Location header
-						const redirectUrl = res.headers.get('Location');
-						if (redirectUrl) {
-							setTimeout(() => {
-								window.location.href = redirectUrl;
-							}, 1000);
-						}
-					} else {
-						errorMsg.textContent = 'Reset failed: ' + res.statusText;
-					}
-				})
-				.catch(e => {
-					errorMsg.textContent = 'Network error: ' + e;
-				});
+		document.getElementById('resetBtn').onclick = async function () {
+			const res = await fetch('/api/session/pipeline/reset', { method: 'POST' })
+			if (res.redirected) {
+				window.location.href = res.url;
+			}
 		};
 
 		// On page load, run pipeline and fetch operation info

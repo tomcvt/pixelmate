@@ -18,7 +18,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RateLimitingFilter.class);
     private final IpRegistry ipRegistry;
     private final BanRegistry banRegistry;
-    private final String [] excludedUri = { "/api/", "/generated/"};
+    private final String [] excludedUri = { "/api/", "/generated/", "/images/", "/js/", "/css/", "/static/" };
     private final String [] excludedIps = { "0.0.0.0.0.0.0.1"};
 
     public RateLimitingFilter(IpRegistry ipRegistry, BanRegistry banRegistry) {

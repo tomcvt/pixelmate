@@ -8,7 +8,7 @@ ARG APP_VERSION=dev
 ENV APP_VERSION=${APP_VERSION}
 LABEL app.version=${APP_VERSION}
 
-RUN ./mvnw -q -e dependency:go-offline
+RUN ./mvnw -q -e dependency:resolve dependency:resolve-plugins
 COPY src src
 RUN ./mvnw -q -e -DskipTests package
 

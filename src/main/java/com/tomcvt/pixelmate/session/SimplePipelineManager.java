@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.catalina.Pipeline;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
@@ -23,6 +24,7 @@ import com.tomcvt.pixelmate.service.SessionCleanupService;
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
 import com.tomcvt.pixelmate.dto.ParamSpec;
+import com.tomcvt.pixelmate.exceptions.PipelineNotReadyException;
 import com.tomcvt.pixelmate.model.operations.*;
 import com.tomcvt.pixelmate.utility.ImageReader;
 
@@ -103,7 +105,7 @@ public class SimplePipelineManager {
 
     public SimpleOperationsPipeline getPipeline() {
         if (pipeline == null) {
-            throw new IllegalStateException("Pipeline has not been created yet.");
+            throw new PipelineNotReadyException("Pipeline has not been created yet.");
         }
         return pipeline;
     }

@@ -14,8 +14,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.tomcvt.pixelmate.dto.ErrorResponse;
-import com.tomcvt.pixelmate.exceptions.DebugException;
-import com.tomcvt.pixelmate.exceptions.FileUploadException;
+import com.tomcvt.pixelmate.exceptions.*;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -76,7 +75,13 @@ public class GlobalExceptionHandler {
             new ErrorResponse("FILE_UPLOAD_ERROR", ex.getMessage())
         );
     }
-
+    @ExceptionHandler(PipelineNotReadyException.class)
+    public ResponseEntity<ErrorResponse> handlePipelineNotReadyException(PipelineNotReadyException ex) {
+        log.error("PipelineNotReadyException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            new ErrorResponse("PIPELINE_NOT_READY", ex.getMessage())
+        );
+    }
     @Profile("dev")
     @ExceptionHandler(DebugException.class)
     public ResponseEntity<ErrorResponse> handleDebugException(DebugException ex) {
