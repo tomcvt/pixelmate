@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 public class ErrorPageController implements ErrorController {
 
-    @RequestMapping("/error")
+    @RequestMapping(value = "/error", produces = "text/plain")
     @ResponseBody
     public ResponseEntity<String> handleError(HttpServletRequest request) {
         // You can customize the message based on status code if needed
