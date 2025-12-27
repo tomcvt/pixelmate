@@ -47,6 +47,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (xff != null && !xff.isEmpty()) {
             clientIp = xff.split(",")[0].trim();
         }
+        if (banRegistry.isBanned(clientIp)) {
+            response.setStatus(403); // Forbidden
+            response.getWriter().write("IP " + clientIp + " is temporarily banned.");
+            return;
+        }
         for (String ip : excludedIps) {
             if (clientIp.equals(ip)) {
                 filterChain.doFilter(request, response);
@@ -60,12 +65,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 return;
             }
         }
-        if (banRegistry.isBanned(clientIp)) {
-            response.setStatus(403); // Forbidden
-            response.getWriter().write("IP " + clientIp + " is temporarily banned.");
-            return;
-        }
-
         try {
             boolean allowed = ipRegistry.incrementAndCheckIfAllowed(clientIp);
             if (!allowed) {

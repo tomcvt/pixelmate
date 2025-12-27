@@ -82,6 +82,8 @@ public class GlobalExceptionHandler {
             new ErrorResponse("PIPELINE_NOT_READY", ex.getMessage())
         );
     }
+
+    // Only in dev profile
     @Profile("dev")
     @ExceptionHandler(DebugException.class)
     public ResponseEntity<ErrorResponse> handleDebugException(DebugException ex) {

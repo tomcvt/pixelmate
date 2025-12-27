@@ -130,7 +130,6 @@ public class SimplePipelineManager {
 
     public List<String> runPipeline() {
         if (firstRunDone) {
-            // getPipeline().clearUrls();
             getPipeline().run();
         } else {
             firstRunDone = true;
