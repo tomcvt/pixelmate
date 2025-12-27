@@ -14,6 +14,9 @@
 		style="min-height:300px; background:#f8f8f8; border:1px solid #ccc; margin-bottom:2em; align-items:center;">
 	</div>
 	<div id="errorMsg" style="color:red; margin-top:1em;"></div>
+	<button id="resetBtn" style="position:fixed; right:30px; bottom:30px; z-index:1000; background:none; border:none; cursor:pointer;">
+		<img src="/images/reset.png" alt="Reset" style="width:60px; height:60px;">
+	</button>
 	<script>
 		// Helper debounce function
 		function debounce(fn, delay) {
@@ -199,6 +202,27 @@
 					});
 			}, 1000);
 		}
+
+		// Reset button logic
+		document.getElementById('resetBtn').onclick = function () {
+			fetch('/api/session/pipeline/reset', { method: 'POST' })
+				.then(async res => {
+					if (res.status === 302) {
+						// Get redirect URL from Location header
+						const redirectUrl = res.headers.get('Location');
+						if (redirectUrl) {
+							setTimeout(() => {
+								window.location.href = redirectUrl;
+							}, 1000);
+						}
+					} else {
+						errorMsg.textContent = 'Reset failed: ' + res.statusText;
+					}
+				})
+				.catch(e => {
+					errorMsg.textContent = 'Network error: ' + e;
+				});
+		};
 
 		// On page load, run pipeline and fetch operation info
 		window.addEventListener('DOMContentLoaded', () => {

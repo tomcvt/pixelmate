@@ -10,6 +10,8 @@ import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
 import com.tomcvt.pixelmate.session.SimplePipelineManager;
 
+import io.micrometer.core.ipc.http.HttpSender.Response;
+
 @RestController
 @RequestMapping("/api/session/pipeline")
 public class SimplePipelineApiController {
@@ -38,10 +40,14 @@ public class SimplePipelineApiController {
 
     @PostMapping("/operations/update-param")
     public ResponseEntity<List<String>> updateOperationParam(@RequestBody ParamInput paramInput) {
-        var urls = pipelineManager.updateOperationParamsAndRun(paramInput.index(), paramInput.values());
+        var urls = pipelineManager.updateOperationParamsAndRun(paramInput);
         return ResponseEntity.ok(urls);
     }
 
-
-    
+    @PostMapping("/reset")
+    public ResponseEntity<?> resetPipeline() {
+        pipelineManager.clearPipeline();
+        var response = ResponseEntity.status(302).header("Location", "/upload");
+        return response.build();
+    }
 }

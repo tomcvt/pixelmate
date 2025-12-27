@@ -20,7 +20,6 @@ import com.tomcvt.pixelmate.pipeline.PipelineMetadata;
 import com.tomcvt.pixelmate.pipeline.SimpleOperationsPipeline;
 import com.tomcvt.pixelmate.registry.PipelineInfoRegistry;
 import com.tomcvt.pixelmate.service.SessionCleanupService;
-import com.fasterxml.jackson.databind.deser.impl.CreatorCandidate.Param;
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
 import com.tomcvt.pixelmate.dto.ParamSpec;
@@ -115,6 +114,16 @@ public class SimplePipelineManager {
 
     public List<String> getUrlList() {
         return getPipeline().getUrlList();
+    }
+
+    public void clearPipeline() {
+        if (this.pipeline != null) {
+            // Clear previous session cache
+            sessionCleanupService.clearSessionDiskCache(this.sessionId);
+            pipelineInfoRegistry.removePipelineInfo(this.sessionId);
+        }
+        this.pipeline = null;
+        this.firstRunDone = false;
     }
 
     public List<String> runPipeline() {
@@ -221,11 +230,16 @@ public class SimplePipelineManager {
     private int applyUpdatesAndGetEarliestIndex(List<ParamInput> updates) {
         int earliestIndex = Integer.MAX_VALUE;
         for (ParamInput paramInput : updates) {
-            getPipeline().updateNodeParameters(paramInput.index(), paramInput.values());
+            try {
+                getPipeline().updateNodeParameters(paramInput.index(), paramInput.values());
+            } catch (Exception e) {
+                log.error("Error updating parameters for operation at index " + paramInput.index(), e);
+            }
             if (paramInput.index() < earliestIndex) {
                 earliestIndex = paramInput.index();
             }
         }
         return earliestIndex;
     }
+    //TODO think about returning all the current parameters to account errors in the UI
 }
