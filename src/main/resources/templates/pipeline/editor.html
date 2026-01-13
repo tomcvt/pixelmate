@@ -1,22 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<title>Pipeline Editor</title>
+	<link rel="stylesheet" href="/css/main.css">
 	<link rel="stylesheet" href="/css/editor.css">
 </head>
-
 <body>
-	<h2>Pipeline Editor</h2>
-	<div id="controls"></div>
-	<div id="imagesRow" class="row"
-		style="min-height:300px; background:#f8f8f8; border:1px solid #ccc; margin-bottom:2em; align-items:center;">
+	<!-- Navbar -->
+	<nav class="navbar">
+		<ul class="navbar-list">
+			<li class="navbar-item"><a href="/" class="navbar-link">Home</a></li>
+			<li class="navbar-item"><a href="/about" class="navbar-link">About</a></li>
+			<li class="navbar-item"><a href="/upload" class="navbar-link">Pixel Art</a></li>
+			<li class="navbar-item dropdown">
+				<a href="#" class="navbar-link">Other</a>
+				<ul class="dropdown-menu">
+					<li><a href="/tools/palette-picker" class="dropdown-link">Pallete picker</a></li>
+				</ul>
+			</li>
+		</ul>
+	</nav>
+	<script>import('/js/navbar.js').then(m => m.Navbar.init());</script>
+	<!-- Navbar End -->
+	<div class="content-wide">
+		<div class="editor-header">
+			<h2>Pipeline Editor</h2>
+			<p class="editor-desc">Adjust pipeline operations and preview results in real time. Use the sliders to tune parameters for each operation.</p>
+		</div>
+		<div id="controls" class="editor-controls"></div>
+		<div id="imagesRow" class="editor-images-row"></div>
+		<div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+		<button id="resetBtn" class="editor-reset-btn" title="Reset pipeline">
+			<img src="/images/reset.png" alt="Reset" class="editor-reset-img">
+		</button>
 	</div>
-	<div id="errorMsg" style="color:red; margin-top:1em;"></div>
-	<button id="resetBtn" style="position:fixed; right:30px; bottom:30px; z-index:1000; background:none; border:none; cursor:pointer;">
-		<img src="/images/reset.png" alt="Reset" style="width:60px; height:60px;">
-	</button>
 	<script>
 		// Helper debounce function
 		function debounce(fn, delay) {
@@ -34,16 +53,27 @@
 		// Render images
 		function renderImages(urls) {
 			imagesRow.innerHTML = '';
+			if (!urls || !urls.length) {
+				const empty = document.createElement('div');
+				empty.className = 'editor-no-images';
+				empty.textContent = 'No images to display.';
+				imagesRow.appendChild(empty);
+				return;
+			}
 			urls.forEach(url => {
+				const imgDiv = document.createElement('div');
+				imgDiv.className = 'editor-img-wrapper';
 				const img = document.createElement('img');
 				img.src = url + '?t=' + Date.now();
-				img.className = 'img-preview';
-				imagesRow.appendChild(img);
+				img.className = 'img-preview editor-img';
+				imgDiv.appendChild(img);
+				imagesRow.appendChild(imgDiv);
 			});
 		}
 
 		// Run pipeline and render images
 		function runPipeline() {
+			errorMsg.style.display = 'none';
 			errorMsg.textContent = '';
 			fetch('/api/session/pipeline/run', { method: 'POST' })
 				.then(async res => {
@@ -54,10 +84,12 @@
 						let err;
 						try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
 						errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+						errorMsg.style.display = 'block';
 					}
 				})
 				.catch(e => {
 					errorMsg.textContent = 'Network error: ' + e;
+					errorMsg.style.display = 'block';
 				});
 		}
 
@@ -70,30 +102,20 @@
 						controls.innerHTML = '';
 						infos.forEach((info, idx) => {
 							const opDiv = document.createElement('div');
-							opDiv.style.display = 'inline-block';
-							opDiv.style.margin = '0 2em 2em 0';
-							opDiv.style.padding = '1em';
-							opDiv.style.border = '1px solid #ddd';
-							opDiv.style.background = '#fafafa';
-							opDiv.style.verticalAlign = 'top';
-							opDiv.style.minWidth = '220px';
+							opDiv.className = 'editor-op-card card';
 							const title = document.createElement('div');
+							title.className = 'editor-op-title';
 							title.textContent = info.name;
-							title.style.fontWeight = 'bold';
-							title.style.marginBottom = '0.5em';
 							opDiv.appendChild(title);
 							info.paramSpecs.forEach(spec => {
-								console.log('Param spec:', spec);
 								if (spec.type === 'Integer(2^n)') {
-									// For Integer(2^n), slider is in log2 space
 									const label = document.createElement('label');
+									label.className = 'editor-slider-label';
 									label.textContent = spec.name + ': ';
 									label.htmlFor = `slider-${idx}-${spec.name}`;
-									label.style.marginRight = '0.5em';
 									const slider = document.createElement('input');
 									slider.type = 'range';
 									slider.id = `slider-${idx}-${spec.name}`;
-									// Compute log2 min/max/default
 									const log2 = x => Math.log2(x);
 									const pow2 = n => Math.pow(2, n);
 									const minExp = Math.round(log2(spec.minValue));
@@ -103,10 +125,10 @@
 									slider.max = maxExp;
 									slider.value = defaultExp;
 									slider.step = 1;
-									slider.style.width = '120px';
+									slider.className = 'editor-slider';
 									const valueSpan = document.createElement('span');
+									valueSpan.className = 'editor-slider-value';
 									valueSpan.textContent = pow2(slider.value);
-									valueSpan.style.marginLeft = '0.5em';
 									slider.oninput = function () {
 										valueSpan.textContent = pow2(slider.value);
 										debouncedUpdateParam(idx, spec.name, pow2(slider.value));
@@ -117,9 +139,9 @@
 									opDiv.appendChild(document.createElement('br'));
 								} else if (spec.type === 'Integer') {
 									const label = document.createElement('label');
+									label.className = 'editor-slider-label';
 									label.textContent = spec.name + ': ';
 									label.htmlFor = `slider-${idx}-${spec.name}`;
-									label.style.marginRight = '0.5em';
 									const slider = document.createElement('input');
 									slider.type = 'range';
 									slider.id = `slider-${idx}-${spec.name}`;
@@ -127,10 +149,10 @@
 									slider.max = spec.maxValue;
 									slider.value = spec.defaultValue;
 									slider.step = 1;
-									slider.style.width = '120px';
+									slider.className = 'editor-slider';
 									const valueSpan = document.createElement('span');
+									valueSpan.className = 'editor-slider-value';
 									valueSpan.textContent = slider.value;
-									valueSpan.style.marginLeft = '0.5em';
 									slider.oninput = function () {
 										valueSpan.textContent = slider.value;
 										debouncedUpdateParam(idx, spec.name, parseInt(slider.value));
@@ -142,21 +164,21 @@
 								}
 								if (spec.type === 'Double' || spec.type === 'Float') {
 									const label = document.createElement('label');
+									label.className = 'editor-slider-label';
 									label.textContent = spec.name + ': ';
 									label.htmlFor = `slider-${idx}-${spec.name}`;
-									label.style.marginRight = '0.5em';
 									const slider = document.createElement('input');
 									slider.type = 'range';
 									slider.id = `slider-${idx}-${spec.name}`;
 									slider.min = spec.minValue;
 									slider.max = spec.maxValue;
-									//for some reason slider.value is not being set correctly
+									//For some reason value is not set correctly
 									slider.value = String(spec.defaultValue);
 									slider.step = (spec.maxValue - spec.minValue) / 100 || 0.01;
-									slider.style.width = '120px';
+									slider.className = 'editor-slider';
 									const valueSpan = document.createElement('span');
+									valueSpan.className = 'editor-slider-value';
 									valueSpan.textContent = slider.value;
-									valueSpan.style.marginLeft = '0.5em';
 									slider.oninput = function () {
 										valueSpan.textContent = slider.value;
 										debouncedUpdateParam(idx, spec.name, parseFloat(slider.value));
@@ -195,10 +217,12 @@
 							let err;
 							try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
 							errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+							errorMsg.style.display = 'block';
 						}
 					})
 					.catch(e => {
 						errorMsg.textContent = 'Network error: ' + e;
+						errorMsg.style.display = 'block';
 					});
 			}, 1000);
 		}
@@ -218,5 +242,4 @@
 		});
 	</script>
 </body>
-
 </html>

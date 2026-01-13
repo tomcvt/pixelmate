@@ -61,6 +61,47 @@ public class KMeansParams implements OperationParameters {
         }
         return new KMeansParams(k, maxIterations, eps);
     }
+
+    public static KMeansParams fromMapWithOldParams(KMeansParams oldParams, Map<String,Object> values) {
+        if (values == null) {
+            return oldParams;
+        }
+        Integer k = oldParams.getK();
+        if (values.containsKey(PARAM_K)) {
+            try {
+                k = Integer.parseInt(values.get(PARAM_K).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid k value: " + values.get(PARAM_K));
+            }
+            if (k < MIN_K || k > MAX_K) {
+                throw new IllegalArgumentException("k value out of bounds: " + k);
+            }
+        }
+        Integer maxIterations = oldParams.getMaxIterations();
+        if (values.containsKey(PARAM_MAX_ITERATIONS)) {
+            try {
+                maxIterations = Integer.parseInt(values.get(PARAM_MAX_ITERATIONS).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid maxIterations value: " + values.get(PARAM_MAX_ITERATIONS));
+            }
+            if (maxIterations < MIN_MAX_ITERATIONS || maxIterations > MAX_MAX_ITERATIONS) {
+                throw new IllegalArgumentException("maxIterations value out of bounds: " + maxIterations);
+            }
+        }
+        Double eps = oldParams.getEps();
+        if (values.containsKey(PARAM_EPS)) {
+            try {
+                eps = Double.parseDouble(values.get(PARAM_EPS).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid eps value: " + values.get(PARAM_EPS));
+            }
+            if (eps < MIN_EPS || eps > MAX_EPS) {
+                throw new IllegalArgumentException("eps value out of bounds: " + eps);
+            }
+        }
+        return new KMeansParams(k, maxIterations, eps);
+    }
+
     public static List<ParamSpec> getParamSpecs() {
         return List.of(
             new ParamSpec(PARAM_K, K_TYPE, DEFAULT_K, MIN_K, MAX_K),

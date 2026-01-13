@@ -26,4 +26,9 @@ public class HomeController {
     public String upload() {
         return "upload-image";
     }
+
+    @GetMapping("/about")
+    public String about() {
+        return "about";
+    }
 }

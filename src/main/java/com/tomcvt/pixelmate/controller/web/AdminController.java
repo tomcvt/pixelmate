@@ -18,7 +18,7 @@ public class AdminController {
     }
     @GetMapping({"", "/"})
     public String adminHome() {
-        return "admin/home";
+        return "admin/admin-home";
     }
     @GetMapping("/logging")
     public String adminLogs() {

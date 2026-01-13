@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>K-Means Tool</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/editor.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <ul class="navbar-list">
+            <li class="navbar-item"><a href="/" class="navbar-link">Home</a></li>
+            <li class="navbar-item"><a href="/about" class="navbar-link">About</a></li>
+            <li class="navbar-item"><a href="/upload" class="navbar-link">Pixel Art</a></li>
+            <li class="navbar-item dropdown">
+                <a href="#" class="navbar-link">Other</a>
+                <ul class="dropdown-menu">
+                    <li><a href="/tools/palette-picker" class="dropdown-link">Palette picker</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <script>import('/js/navbar.js').then(m => m.Navbar.init());</script>
+    <!-- Navbar End -->
+    <div class="content-wide">
+        <div class="editor-header">
+            <h2>K-Means Tool</h2>
+            <p class="editor-desc">Adjust K-Means parameters and preview results in real time.</p>
+        </div>
+        <div id="controls" class="editor-controls"></div>
+        <div id="imagesRow" class="editor-images-row"></div>
+        <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+        <button id="resetBtn" class="editor-reset-btn" title="Reset K-Means">
+            <img src="/images/reset.png" alt="Reset" class="editor-reset-img">
+        </button>
+    </div>
+    <script>
+        const imagesRow = document.getElementById('imagesRow');
+        const errorMsg = document.getElementById('errorMsg');
+        const controls = document.getElementById('controls');
+
+        function renderImages(urls) {
+            imagesRow.innerHTML = '';
+            if (!urls || !urls.length) {
+                const empty = document.createElement('div');
+                empty.className = 'editor-no-images';
+                empty.textContent = 'No images to display.';
+                imagesRow.appendChild(empty);
+                return;
+            }
+            urls.forEach(url => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'editor-img-wrapper';
+                const img = document.createElement('img');
+                img.src = url + '?t=' + Date.now();
+                img.className = 'img-preview editor-img';
+                imgDiv.appendChild(img);
+                imagesRow.appendChild(imgDiv);
+            });
+        }
+
+        function runKMeans() {
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
+            fetch('/api/session/tools/kmeans/run', { method: 'POST' })
+                .then(async res => {
+                    if (res.ok) {
+                        const urls = await res.json();
+                        renderImages(urls);
+                    } else {
+                        let err;
+                        try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+                        errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+                        errorMsg.style.display = 'block';
+                    }
+                })
+                .catch(e => {
+                    errorMsg.textContent = 'Network error: ' + e;
+                    errorMsg.style.display = 'block';
+                });
+        }
+
+        function fetchOperationInfo() {
+            fetch('/api/session/tools/kmeans/info')
+                .then(async res => {
+                    if (res.ok) {
+                        const info = await res.json();
+                        controls.innerHTML = '';
+                        const opDiv = document.createElement('div');
+                        opDiv.className = 'editor-op-card card';
+                        const title = document.createElement('div');
+                        title.className = 'editor-op-title';
+                        title.textContent = info.name;
+                        opDiv.appendChild(title);
+                        info.paramSpecs.forEach(spec => {
+                            if (spec.type === 'Integer(2^n)') {
+                                const label = document.createElement('label');
+                                label.className = 'editor-slider-label';
+                                label.textContent = spec.name + ': ';
+                                label.htmlFor = `slider-kmeans-${spec.name}`;
+                                const slider = document.createElement('input');
+                                slider.type = 'range';
+                                slider.id = `slider-kmeans-${spec.name}`;
+                                const log2 = x => Math.log2(x);
+                                const pow2 = n => Math.pow(2, n);
+                                const minExp = Math.round(log2(spec.minValue));
+                                const maxExp = Math.round(log2(spec.maxValue));
+                                const defaultExp = Math.round(log2(spec.defaultValue));
+                                slider.min = minExp;
+                                slider.max = maxExp;
+                                slider.value = defaultExp;
+                                slider.step = 1;
+                                slider.className = 'editor-slider';
+                                const valueSpan = document.createElement('span');
+                                valueSpan.className = 'editor-slider-value';
+                                valueSpan.textContent = pow2(slider.value);
+                                slider.oninput = function () {
+                                    valueSpan.textContent = pow2(slider.value);
+                                    debouncedUpdateParam(spec.name, pow2(slider.value));
+                                };
+                                opDiv.appendChild(label);
+                                opDiv.appendChild(slider);
+                                opDiv.appendChild(valueSpan);
+                                opDiv.appendChild(document.createElement('br'));
+                            } else if (spec.type === 'Integer') {
+                                const label = document.createElement('label');
+                                label.className = 'editor-slider-label';
+                                label.textContent = spec.name + ': ';
+                                label.htmlFor = `slider-kmeans-${spec.name}`;
+                                const slider = document.createElement('input');
+                                slider.type = 'range';
+                                slider.id = `slider-kmeans-${spec.name}`;
+                                slider.min = spec.minValue;
+                                slider.max = spec.maxValue;
+                                slider.value = spec.defaultValue;
+                                slider.step = 1;
+                                slider.className = 'editor-slider';
+                                const valueSpan = document.createElement('span');
+                                valueSpan.className = 'editor-slider-value';
+                                valueSpan.textContent = slider.value;
+                                slider.oninput = function () {
+                                    valueSpan.textContent = slider.value;
+                                    debouncedUpdateParam(spec.name, parseInt(slider.value));
+                                };
+                                opDiv.appendChild(label);
+                                opDiv.appendChild(slider);
+                                opDiv.appendChild(valueSpan);
+                                opDiv.appendChild(document.createElement('br'));
+                            }
+                            if (spec.type === 'Double' || spec.type === 'Float') {
+                                const label = document.createElement('label');
+                                label.className = 'editor-slider-label';
+                                label.textContent = spec.name + ': ';
+                                label.htmlFor = `slider-kmeans-${spec.name}`;
+                                const slider = document.createElement('input');
+                                slider.type = 'range';
+                                slider.id = `slider-kmeans-${spec.name}`;
+                                slider.min = spec.minValue;
+                                slider.max = spec.maxValue;
+                                slider.value = String(spec.defaultValue);
+                                slider.step = (spec.maxValue - spec.minValue) / 100 || 0.01;
+                                slider.className = 'editor-slider';
+                                const valueSpan = document.createElement('span');
+                                valueSpan.className = 'editor-slider-value';
+                                valueSpan.textContent = slider.value;
+                                slider.oninput = function () {
+                                    valueSpan.textContent = slider.value;
+                                    debouncedUpdateParam(spec.name, parseFloat(slider.value));
+                                };
+                                opDiv.appendChild(label);
+                                opDiv.appendChild(slider);
+                                opDiv.appendChild(valueSpan);
+                                opDiv.appendChild(document.createElement('br'));
+                            }
+                        });
+                        controls.appendChild(opDiv);
+                    }
+                });
+        }
+
+        // Debounced update param logic
+        let updateParamTimer = null;
+        function debouncedUpdateParam(paramName, value) {
+            if (updateParamTimer) clearTimeout(updateParamTimer);
+            updateParamTimer = setTimeout(() => {
+                const payload = {
+                    values: { [paramName]: value }
+                };
+                fetch('/api/session/tools/kmeans/update-param', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(async res => {
+                        if (res.ok) {
+                            const urls = await res.json();
+                            renderImages(urls);
+                        } else {
+                            let err;
+                            try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+                            errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
+                            errorMsg.style.display = 'block';
+                        }
+                    })
+                    .catch(e => {
+                        errorMsg.textContent = 'Network error: ' + e;
+                        errorMsg.style.display = 'block';
+                    });
+            }, 500);
+        }
+
+        document.getElementById('resetBtn').onclick = async function () {
+            const res = await fetch('/api/session/tools/kmeans/reset', { method: 'POST' })
+            if (res.redirected) {
+                window.location.href = res.url;
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            runKMeans();
+            fetchOperationInfo();
+        });
+    </script>
+</body>
+</html>

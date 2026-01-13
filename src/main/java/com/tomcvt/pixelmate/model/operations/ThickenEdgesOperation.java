@@ -47,8 +47,6 @@ public class ThickenEdgesOperation implements ImageOperationI<RadiusParams> {
         BufferedImage edges = input.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.BINARY, ImageFrame.EditPath.GRAYSCALE);
         if (parameters.getRadius() == 0) {
             return ImageFrame.with(input, edges, ImageFrame.ImageType.BINARY);
-            //return input;
-            //TODO think about it and consequences
         }
         int width = edges.getWidth();
         int height = edges.getHeight();

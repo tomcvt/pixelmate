@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Upload Tools</title>
+    <link href="/css/main.css" rel="stylesheet" />
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <ul class="navbar-list">
+            <li class="navbar-item"><a href="/" class="navbar-link">Home</a></li>
+            <li class="navbar-item"><a href="/about" class="navbar-link">About</a></li>
+            <li class="navbar-item"><a href="/upload" class="navbar-link">Pixel Art</a></li>
+            <li class="navbar-item dropdown">
+                <a href="#" class="navbar-link">Other</a>
+                <ul class="dropdown-menu">
+                    <li><a href="/tools/palette-picker" class="dropdown-link">Palette picker</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <script>import('/js/navbar.js').then(m => m.Navbar.init());</script>
+    <!-- Navbar End -->
+    <div class="content">
+        <form class="login-form" id="uploadToolsForm" style="max-width: 500px;">
+            <h2>Upload Image for Tools</h2>
+            <div style="width: 100%; margin-bottom: 18px;">
+                <p style="text-align: center; font-size: 1.05rem; color: var(--color-subheading);">
+                    Select an image file and choose which tools to use.
+                </p>
+            </div>
+            <input type="file" name="file" id="fileInput" accept="image/*" required style="margin-bottom: 18px; width: 100%;" />
+            <div style="margin-bottom: 18px;">
+                <label style="font-weight: 500;">
+                    <input type="checkbox" name="tool-kmeans" id="toolKMeans" checked disabled style="margin-right: 8px;" />
+                    Palette-picker
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary wide">Upload & Start</button>
+            <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+        </form>
+    </div>
+    <script>
+        const form = document.getElementById('uploadToolsForm');
+        const errorMsg = document.getElementById('errorMsg');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                errorMsg.textContent = 'Please select an image file.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            // Only K-Means for now
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            fetch('/api/session/tools/kmeans/create-default', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                if (response.ok) {
+                    setTimeout(() => {
+                        window.location.href = '/tools/palette-picker';
+                    }, 1000);
+                } else {
+                    let errorText = 'Upload failed.';
+                    try {
+                        const errorJson = await response.json();
+                        errorText = errorJson.message || JSON.stringify(errorJson);
+                    } catch (e) {}
+                    errorMsg.textContent = errorText;
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                errorMsg.textContent = 'Network error: ' + err;
+                errorMsg.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

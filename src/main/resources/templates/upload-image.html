@@ -8,12 +8,28 @@
 	<link href="/css/main.css" rel="stylesheet" />
 </head>
 <body>
+	<!-- Navbar -->
+    <nav class="navbar">
+        <ul class="navbar-list">
+            <li class="navbar-item"><a href="/" class="navbar-link">Home</a></li>
+            <li class="navbar-item"><a href="/about" class="navbar-link">About</a></li>
+            <li class="navbar-item"><a href="/upload" class="navbar-link">Pixel Art</a></li>
+            <li class="navbar-item dropdown">
+                <a href="#" class="navbar-link">Other</a>
+                <ul class="dropdown-menu">
+                    <li><a href="/tools/palette-picker" class="dropdown-link">Palette picker</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <script>import('/js/navbar.js').then(m => m.Navbar.init());</script>
+    <!-- Navbar End -->
 	<div class="content">
 		<form class="login-form" id="uploadForm" style="max-width: 500px;">
 			<h2>Upload Image</h2>
 			<div style="width: 100%; margin-bottom: 18px;">
 				<p style="text-align: center; font-size: 1.05rem; color: var(--color-subheading);">
-					Select an image file to upload and start processing with Pixelmate's advanced tools.
+					Select an image file to upload and start processing.
 				</p>
 			</div>
 			<input type="file" name="file" id="fileInput" accept="image/*" required style="margin-bottom: 18px; width: 100%;" />
