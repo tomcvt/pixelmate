@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>K-Means Tool</title>
     <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/editor.css">
+    <link rel="stylesheet" href="/css/k-means.css">
 </head>
 <body>
     <!-- Navbar -->
@@ -17,6 +17,7 @@
             <li class="navbar-item dropdown">
                 <a href="#" class="navbar-link">Other</a>
                 <ul class="dropdown-menu">
+                    <li><a href="/tools/upload-tools" class="dropdown-link">Tools</a></li>
                     <li><a href="/tools/palette-picker" class="dropdown-link">Palette picker</a></li>
                 </ul>
             </li>
@@ -26,11 +27,23 @@
     <!-- Navbar End -->
     <div class="content-wide">
         <div class="editor-header">
-            <h2>K-Means Tool</h2>
+            <h2>Palette picker</h2>
             <p class="editor-desc">Adjust K-Means parameters and preview results in real time.</p>
         </div>
-        <div id="controls" class="editor-controls"></div>
-        <div id="imagesRow" class="editor-images-row"></div>
+        <div class="kmeans-flex-row">
+            <div class="kmeans-images-col">
+                <div id="imagesRow" class="editor-images-row"></div>
+            </div>
+            <div class="kmeans-controls-col">
+                <div class="parameters">
+                    <div id="controls" class="editor-controls"></div>
+                    <div class="palette">
+                        <h3>Palette</h3>
+                        <div class="palette-placeholder">Palette preview coming soon...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
         <button id="resetBtn" class="editor-reset-btn" title="Reset K-Means">
             <img src="/images/reset.png" alt="Reset" class="editor-reset-img">
@@ -61,17 +74,40 @@
             });
         }
 
+        function renderPalette(palette) {
+            const paletteDiv = document.querySelector('.palette');
+            paletteDiv.innerHTML = '<h3>Palette</h3>';
+            palette.forEach(color => {
+                const paletteRow = document.createElement('div');
+                paletteRow.className = 'palette-row';
+                const colorBox = document.createElement('div');
+                colorBox.className = 'palette-color-box';
+                colorBox.style.backgroundColor = color;
+                const colorLabel = document.createElement('span');
+                colorLabel.className = 'palette-color-label';
+                colorLabel.textContent = color;
+                paletteRow.appendChild(colorBox);
+                paletteRow.appendChild(colorLabel);
+                paletteDiv.appendChild(paletteRow);
+            });
+        }
+
         function runKMeans() {
             errorMsg.style.display = 'none';
             errorMsg.textContent = '';
             fetch('/api/session/tools/kmeans/run', { method: 'POST' })
                 .then(async res => {
                     if (res.ok) {
-                        const urls = await res.json();
-                        renderImages(urls);
+                        const result = await res.json();
+                        if (result.urls) renderImages(result.urls);
+                        if (result.palette) renderPalette(result.palette);
                     } else {
                         let err;
                         try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }
+                        if (err.error === 'TOOL_NOT_READY') {
+                            window.location.href = '/tools/upload-tools';
+                            return;
+                        }
                         errorMsg.textContent = (err.error ? err.error + ': ' : '') + (err.message || JSON.stringify(err));
                         errorMsg.style.display = 'block';
                     }
@@ -195,8 +231,9 @@
                 })
                     .then(async res => {
                         if (res.ok) {
-                            const urls = await res.json();
-                            renderImages(urls);
+                            const result = await res.json();
+                            if (result.urls) renderImages(result.urls);
+                            if (result.palette) renderPalette(result.palette);
                         } else {
                             let err;
                             try { err = await res.json(); } catch { err = { error: 'Unknown', message: res.statusText }; }

@@ -1,10 +1,12 @@
 package com.tomcvt.pixelmate.model.operations;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.tomcvt.pixelmate.dto.ParamSpec;
+import com.tomcvt.pixelmate.model.ImageAndPalette;
 import com.tomcvt.pixelmate.model.ImageFrame;
 import com.tomcvt.pixelmate.model.ImageOperationI;
 import com.tomcvt.pixelmate.model.OperationType;
@@ -17,6 +19,7 @@ public class KMeansOperation implements ImageOperationI<KMeansParams> {
     public static final String NAME = "KMEANS_CLUSTERING";
     public final OperationType operationType = OperationType.COLOR;
     private final long seed = 123456789L; // Fixed seed for reproducibility
+    private List<Integer> lastPalette = new ArrayList<>();
     public KMeansOperation() {
     }
 
@@ -52,21 +55,29 @@ public class KMeansOperation implements ImageOperationI<KMeansParams> {
     @Override
     public ImageFrame apply(ImageFrame input, KMeansParams parameters) {
         BufferedImage inputImage = input.getConvertedBufferedImageForOperationByType(ImageFrame.ImageType.ARGB, ImageFrame.EditPath.COLOR);
-        BufferedImage outputImage = KMeansQuantizer.quantize(inputImage,
+        ImageAndPalette result = KMeansQuantizer.quantize(inputImage,
                 parameters.getK(),
                 parameters.getMaxIterations(),
                 parameters.getEps(),
                 seed);
+        BufferedImage outputImage = result.image();
+        lastPalette = result.palette();
         return ImageFrame.with(input, outputImage, ImageFrame.ImageType.ARGB);
     }
     @Override
     public SimpleImageFrame applySimple(SimpleImageFrame input, KMeansParams parameters) {
         BufferedImage inputImage = input.getColoredImage();
-        BufferedImage outputImage = KMeansQuantizer.quantize(inputImage,
+        ImageAndPalette result = KMeansQuantizer.quantize(inputImage,
                 parameters.getK(),
                 parameters.getMaxIterations(),
                 parameters.getEps(),
                 seed);
+        BufferedImage outputImage = result.image();
+        lastPalette = result.palette();
         return input.withColored(outputImage);
+    }
+
+    public List<Integer> getLastPalette() {
+        return lastPalette;
     }
 }

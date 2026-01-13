@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ToolsController {
     @GetMapping("/palette-picker")
     public String showPalettePickerTool() {
+        return "tools/k-means";
+    }
+    @GetMapping("/upload-tools")
+    public String showUploadToolsPage() {
         return "tools/upload-tools";
     }
 

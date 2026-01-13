@@ -82,6 +82,13 @@ public class GlobalExceptionHandler {
             new ErrorResponse("PIPELINE_NOT_READY", ex.getMessage())
         );
     }
+    @ExceptionHandler(ToolNotReadyException.class)
+    public ResponseEntity<ErrorResponse> handleToolNotReadyException(ToolNotReadyException ex) {
+        log.error("ToolNotReadyException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            new ErrorResponse("TOOL_NOT_READY", ex.getMessage())
+        );
+    }
 
     // Only in dev profile
     @Profile("dev")

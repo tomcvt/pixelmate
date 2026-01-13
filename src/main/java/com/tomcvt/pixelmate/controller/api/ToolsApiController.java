@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
+import com.tomcvt.pixelmate.dto.UrlsAndPalette;
 import com.tomcvt.pixelmate.session.ToolsManager;
 
 @RestController
@@ -32,7 +33,7 @@ public class ToolsApiController {
     }
 
     @PostMapping("/kmeans/run")
-    public ResponseEntity<List<String>> runKMeans() {
+    public ResponseEntity<UrlsAndPalette> runKMeans() {
         var urls = toolsManager.runKMeans();
         return ResponseEntity.ok(urls);
     }
@@ -44,9 +45,18 @@ public class ToolsApiController {
     }
 
     @PostMapping("/kmeans/update-param")
-    public ResponseEntity<List<String>> updateOperationParam(@RequestBody ParamInput paramInput) {
+    public ResponseEntity<UrlsAndPalette> updateOperationParam(@RequestBody ParamInput paramInput) {
         var urls = toolsManager.updateKMeansParamsAndRun(paramInput);
         return ResponseEntity.ok(urls);
+    }
+
+    @GetMapping("/kmeans/last-palette")
+    public ResponseEntity<List<String>> getKMeansLastPalette() {
+        var intPalette = toolsManager.getKMeansLastPalette();
+        List<String> palette = intPalette.stream()
+                .map(rgb -> String.format("#%06X", (0xFFFFFF & rgb)))
+                .toList();
+        return ResponseEntity.ok(palette);
     }
 
     @PostMapping("/kmeans/reset")

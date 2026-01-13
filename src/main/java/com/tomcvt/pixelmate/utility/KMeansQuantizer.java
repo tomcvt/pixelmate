@@ -1,12 +1,16 @@
 package com.tomcvt.pixelmate.utility;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
+
+import com.tomcvt.pixelmate.model.ImageAndPalette;
 
 public class KMeansQuantizer {
 
-    public static BufferedImage quantize(BufferedImage src, int k, int maxIter, double EPS, long seed) {
+    public static ImageAndPalette quantize(BufferedImage src, int k, int maxIter, double EPS, long seed) {
         if (k <= 0) throw new IllegalArgumentException("k must be > 0");
         int w = src.getWidth();
         int h = src.getHeight();
@@ -128,7 +132,17 @@ public class KMeansQuantizer {
             outPixels[i] = outRgb;
         }
         out.setRGB(0, 0, w, h, outPixels, 0, w);
-        return out;
+
+        //Extracting pallete 
+        List<Integer> palette = new ArrayList<>();
+        for (int c = 0; c < k; c++) {
+            int r = (int)Math.round(centroids[c][0]);
+            int g = (int)Math.round(centroids[c][1]);
+            int b = (int)Math.round(centroids[c][2]);
+            int rgb = (clamp(r) << 16) | (clamp(g) << 8) | clamp(b);
+            palette.add(rgb);
+        }
+        return new ImageAndPalette(out, palette);
     }
 
     private static int clamp(int v) {

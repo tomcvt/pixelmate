@@ -1,6 +1,7 @@
 package com.tomcvt.pixelmate.tools;
 
 import com.tomcvt.pixelmate.dto.ParamInput;
+import com.tomcvt.pixelmate.dto.UrlsAndPalette;
 import com.tomcvt.pixelmate.model.SimpleImageFrame;
 import com.tomcvt.pixelmate.model.operations.KMeansOperation;
 import com.tomcvt.pixelmate.parameters.KMeansParams;
@@ -19,6 +20,7 @@ public class KMeansManager {
     private String savedKMeansRelPath;
     private KMeansOperation kMeansOperation = new KMeansOperation();
     private KMeansParams kMeansParams;
+    private List<Integer> lastPalette = new ArrayList<>();
     private List<String> urlList = new ArrayList<>();
     //private SimpleImageFrame imageFrame;
     public KMeansManager(BufferedImage original, String sessionId, String cacheDir) {
@@ -33,6 +35,7 @@ public class KMeansManager {
         BufferedImage original = ImageSaver.loadImage(cacheDir, sessionId, ORIGINAL_NAME);
         SimpleImageFrame imgFrame = SimpleImageFrame.fromBufferedImage(original);
         SimpleImageFrame result = kMeansOperation.applySimple(imgFrame, kMeansParams);
+        lastPalette = kMeansOperation.getLastPalette();
         BufferedImage resultImage = result.getColoredImage();
         String savedRelPath = ImageSaver.saveImage(cacheDir, sessionId, KMEANS_NAME, resultImage);
         this.savedKMeansRelPath = savedRelPath;
@@ -52,5 +55,16 @@ public class KMeansManager {
     public void updateParams(ParamInput paramInput) {
         KMeansParams params = KMeansParams.fromMapWithOldParams(kMeansParams, paramInput.values());
         this.kMeansParams = params;
+    }
+
+    public List<Integer> getLastPalette() {
+        return lastPalette;
+    }
+
+    public UrlsAndPalette getUrlsAndPalette() {
+        List<String> palette = lastPalette.stream()
+                .map(rgb -> String.format("#%06X", (0xFFFFFF & rgb)))
+                .toList();
+        return new UrlsAndPalette(urlList, palette);
     }
 }

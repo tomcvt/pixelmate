@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.deser.impl.CreatorCandidate.Param;
 import com.tomcvt.pixelmate.dto.OperationInfoDto;
 import com.tomcvt.pixelmate.dto.ParamInput;
+import com.tomcvt.pixelmate.dto.UrlsAndPalette;
+import com.tomcvt.pixelmate.exceptions.ToolNotReadyException;
 import com.tomcvt.pixelmate.model.operations.ApplyEdgesOperation;
 import com.tomcvt.pixelmate.model.operations.EdgeDetectionOperation;
 import com.tomcvt.pixelmate.model.operations.EdgeQuantizationOperation;
@@ -101,7 +103,7 @@ public class ToolsManager {
 
     public KMeansManager getKMeansManager() {
         if (kMeansManager == null) {
-            throw new IllegalStateException("KMeansManager not initialized. Call createDefaultPipeline first.");
+            throw new ToolNotReadyException("Please upload a picture first.");
         }
         return kMeansManager;
     }
@@ -129,17 +131,21 @@ public class ToolsManager {
         sessionCleanupService.clearSessionDiskCache(sessionId);
     }
 
-    public List<String> runKMeans() {
+    public UrlsAndPalette runKMeans() {
         KMeansManager manager = getKMeansManager();
         manager.run();
-        return manager.getUrlList();
+        return manager.getUrlsAndPalette();
     }
 
-    public List<String> updateKMeansParamsAndRun(ParamInput paramInput) {
+    public UrlsAndPalette updateKMeansParamsAndRun(ParamInput paramInput) {
         updateQueue.offer(paramInput);
         startWorkerIfNeeded();
         waitUntilQueueEmptyAndWorkerIdle();
-        return getKMeansManager().getUrlList();
+        return getKMeansManager().getUrlsAndPalette();
+    }
+
+    public List<Integer> getKMeansLastPalette() {
+        return getKMeansManager().getLastPalette();
     }
 
     private void startWorkerIfNeeded() {
